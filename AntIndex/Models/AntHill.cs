@@ -11,9 +11,9 @@ using ProtoBuf;
 namespace AntIndex.Models;
 
 [ProtoContract]
-public class IndexInstance
+public class AntHill
 {
-    public IndexInstance() { }
+    public AntHill() { }
 
     [ProtoMember(1)]
     public Dictionary<byte /*TypeId*/, Dictionary<int /*EntityId*/, EntityMeta>> Entities { get; set; } = [];

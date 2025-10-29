@@ -19,7 +19,7 @@ public class Search(
     : AntRequest(entityType, filter)
 {
     public override void ProcessRequest(
-        IndexInstance index,
+        AntHill index,
         SearchContextBase searchContext,
         Dictionary<int, ushort>[] wordsBundle,
         CancellationToken ct)

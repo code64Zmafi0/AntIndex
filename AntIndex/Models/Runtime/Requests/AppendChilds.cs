@@ -17,7 +17,7 @@ public class AppendChilds(
     int fromTop = 0) : AntRequest(entityType)
 {
     public override void ProcessRequest(
-        IndexInstance index,
+        AntHill index,
         SearchContextBase searchContext,
         Dictionary<int, ushort>[] wordsBundle,
         CancellationToken ct)

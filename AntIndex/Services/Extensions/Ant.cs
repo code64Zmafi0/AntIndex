@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Runtime;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using AntIndex.Interfaces;
 using AntIndex.Models;
 using AntIndex.Models.Index;
 using AntIndex.Models.Runtime;
+using AntIndex.Services.Builder;
 using AntIndex.Services.Normalizing;
 using AntIndex.Services.Splitting;
 using ProtoBuf;
@@ -68,149 +70,38 @@ public static class Ant
     #endregion
 
     #region Build
-    public static IndexInstance Build(
-        INormalizer normalizer,
-        IPhraseSplitter phraseSplitter,
-        IEnumerable<IIndexedEntity> indexedEntities)
+    public static AntHillBuilder GetBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter) 
+        => new(normalizer, phraseSplitter);
+
+    public static AntHill Build(INormalizer normalizer, IPhraseSplitter phraseSplitter, IEnumerable<IIndexedEntity> entities)
     {
-        var entities = new Dictionary<byte, Dictionary<int, EntityMeta>>();
-        var entitiesByWordsIndex = new EntitiesByWordsIndex();
-        var wordsBundle = new WordsBuildBundle();
-        var childs = new Dictionary<Key, HashSet<Key>>();
+        var builder = new AntHillBuilder(normalizer, phraseSplitter);
 
-        foreach (var indexedEntity in indexedEntities)
-        {
-            Key key = indexedEntity.GetKey();
+        foreach (var entity in entities)
+            builder.AddEntity(entity);
 
-            if (entities.TryGetValue(key.Type, out var ids) && ids.ContainsKey(key.Id))
-                continue;
-
-            var names = indexedEntity.GetNames();
-            var chains = indexedEntity.ChainedKeys();
-            var byKeys = indexedEntity.ByKeys();
-            HashSet<Key> nodesKeys = [];
-
-            for (var i = 0; i < byKeys.Length; i++)
-            {
-                nodesKeys.Add(byKeys[i]);
-            }
-
-            foreach (var node in indexedEntity.ChainedKeys())
-            {
-                nodesKeys.Add(node);
-
-                ref var set = ref CollectionsMarshal.GetValueRefOrAddDefault(childs, node, out var exists);
-
-                if (!exists)
-                    set = [];
-
-                set!.Add(key);
-            }
-
-            HashSet<int> uniqWords = [];
-            (string[] TokenizedPhrase, byte PhraseType)[] namesToBuild = GetNamesToBuild(names, normalizer, phraseSplitter);
-            for (int nameIndex = 0; nameIndex < namesToBuild.Length; nameIndex++)
-            {
-                (string[] phrase, byte phraseType) = namesToBuild[nameIndex];
-
-                for (byte wordNamePosition = 0; wordNamePosition < phrase.Length && wordNamePosition < byte.MaxValue; wordNamePosition++)
-                {
-                    string word = phrase[wordNamePosition];
-                    var wordId = wordsBundle.GetWordId(word);
-
-                    if (!uniqWords.Add(wordId))
-                        continue;
-
-                    WordMatchMeta wordMatchMeta = new(key.Id, wordNamePosition, phraseType);
-                    entitiesByWordsIndex.AddMatch(wordId, key.Type, byKeys, wordMatchMeta);
-                }
-            }
-
-            ref var byTypeEntiteies = ref CollectionsMarshal.GetValueRefOrAddDefault(entities, key.Type, out var containsType);
-
-            if (!containsType)
-                byTypeEntiteies = [];
-
-            byTypeEntiteies![key.Id] = new(key, [.. nodesKeys]);
-        }
-
-        foreach (var item in childs)
-            entities[item.Key.Type][item.Key.Id].Childs = [.. item.Value];
-
-        Dictionary<int, HashSet<int>> wordsIdsByNgramms = [];
-        Dictionary<int, int[]> wordsByIds = [];
-
-        foreach (var item in wordsBundle.GetWordsByIds())
-        {
-            int[] ngramms = GetNgrams(item.Key);
-
-            wordsByIds[item.Value] = ngramms;
-
-            for (int i = 0; i < ngramms.Length; i++)
-            {
-                int ngramm = ngramms[i];
-                ref var words = ref CollectionsMarshal.GetValueRefOrAddDefault(wordsIdsByNgramms, ngramm, out var exists);
-
-                if (!exists)
-                    words = [];
-
-                words!.Add(item.Value);
-            }
-        }
-
-        return new IndexInstance()
-        {
-            Entities = entities,
-            WordsByIds = wordsByIds,
-            EntitiesByWordsIndex = entitiesByWordsIndex,
-            WordsIdsByNgramms = wordsIdsByNgramms.ToDictionary(i => i.Key, i => i.Value.ToArray()),
-        };
+        return builder.Build();
     }
 
-    private static (string[] TokenizedPhrase, byte PhraseType)[] GetNamesToBuild(
-        IEnumerable<Phrase> phrases,
-        INormalizer normalizer,
-        IPhraseSplitter phraseSplitter)
-        => [.. phrases.Select(phrase =>
-        {
-            string normalizedPhrase = normalizer.Normalize(phrase.Text!);
-            string[] tokenizedPhrase = phraseSplitter.Tokenize(normalizedPhrase);
-            return (tokenizedPhrase, phrase.PhraseType);
-        })];
-
-    private class WordsBuildBundle()
+    public static async Task<AntHill> Build(INormalizer normalizer, IPhraseSplitter phraseSplitter, IAsyncEnumerable<IIndexedEntity> entities)
     {
-        private int CurrentId = int.MinValue;
+        var builder = new AntHillBuilder(normalizer, phraseSplitter);
 
-        private readonly Dictionary<string, int> Pairs = [];
+        await foreach (var entity in entities)
+            builder.AddEntity(entity);
 
-        public int GetWordId(string word)
-        {
-            ref var id = ref CollectionsMarshal.GetValueRefOrAddDefault(Pairs, word, out var exists);
-            if (exists)
-                return id;
-
-            id = CurrentId++;
-            return id;
-        }
-
-        public IEnumerable<KeyValuePair<string, int>> GetWordsByIds()
-        {
-            var words = new Dictionary<int, Word>(Pairs.Count);
-
-            foreach (var wordIdPair in Pairs.OrderBy(i => i.Key))
-                yield return wordIdPair;
-        }
+        return builder.Build();
     }
+
     #endregion
 
     #region Serialization
-    public static void WriteIndex(IndexInstance index, string filePath)
+    public static void WriteIndex(AntHill index, string filePath)
         => WriteObject(filePath, index);
 
-    public static IndexInstance ReadIndex(string filePath)
+    public static AntHill ReadIndex(string filePath)
     {
-        IndexInstance index = ReadAndDeserializeObject<IndexInstance>(filePath);
+        AntHill index = ReadAndDeserializeObject<AntHill>(filePath);
         index.Trim();
 
         return index;

@@ -21,7 +21,7 @@ public class SearchBy(
         => parentRequest.SearchResult.Keys;
 
     public override void ProcessRequest(
-        IndexInstance index,
+        AntHill index,
         SearchContextBase searchContext,
         Dictionary<int, ushort>[] wordsBundle,
         CancellationToken ct)

@@ -14,7 +14,7 @@ public abstract class AntRequest(byte entityType, Func<IEnumerable<EntityMatches
     public Func<IEnumerable<EntityMatchesBundle>, IEnumerable<EntityMatchesBundle>>? Filter { get; set; } = filter;
 
     public abstract void ProcessRequest(
-        IndexInstance index,
+        AntHill index,
         SearchContextBase searchContext,
         Dictionary<int, ushort>[] wordsBundle,
         CancellationToken ct);
