@@ -17,7 +17,7 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
     private readonly EntitiesByWordsIndex EntitiesByWordsIndex = new();
     private readonly WordsBuildBundle WordsBundle = new();
 
-    public void AddEntity(IIndexedEntity indexedEntity)
+    public void AddEntity(in IIndexedEntity indexedEntity)
     {
         Key key = indexedEntity.GetKey();
 
