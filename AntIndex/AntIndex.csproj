@@ -6,10 +6,11 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>AntIndex</Title>
-    <Authors>code64ZmafIO</Authors>
+    <Authors>code64Zmafi0</Authors>
     <Description>Linked data text search engine.</Description>
     <RepositoryUrl>https://github.com/code64ZmafIO/AntIndex</RepositoryUrl>
     <PackageTags>search; index; realtions; data;</PackageTags>
+    <Version>2.0.2</Version>
   </PropertyGroup>
 
   <ItemGroup>

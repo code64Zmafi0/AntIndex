@@ -40,7 +40,7 @@ public class EntitiesByWordsIndex()
         }
     }
 
-    public void AddMatch(int wordId, byte entityType, Key[] byKeys, WordMatchMeta wordMatch)
+    public void AddMatch(int wordId, byte entityType, Key? byKey, WordMatchMeta wordMatch)
     {
         ref var wordMatches = ref CollectionsMarshal.GetValueRefOrAddDefault(EntitiesByWords, wordId, out var exists);
 
@@ -52,17 +52,14 @@ public class EntitiesByWordsIndex()
         if (!exists)
             matchesBundle = [];
 
-        if (byKeys.Length > 0)
+        if (byKey is not null)
         {
-            for (int i = 0; i < byKeys.Length; i++)
-            {
-                ref var matches = ref CollectionsMarshal.GetValueRefOrAddDefault(matchesBundle!, byKeys[i], out exists);
+            ref var matches = ref CollectionsMarshal.GetValueRefOrAddDefault(matchesBundle!, byKey, out exists);
 
-                if (!exists)
-                    matches = [];
+            if (!exists)
+                matches = [];
 
-                matches!.Add(wordMatch);
-            }
+            matches!.Add(wordMatch);
         }
         else
         {

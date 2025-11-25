@@ -9,7 +9,7 @@ public interface IIndexedEntity
 
     IEnumerable<Phrase> GetNames();
 
-    IEnumerable<Key> ChainedKeys();
+    IEnumerable<Key> Parents();
 
-    Key[] ByKeys() => Array.Empty<Key>();
+    Key? ByParent();
 }

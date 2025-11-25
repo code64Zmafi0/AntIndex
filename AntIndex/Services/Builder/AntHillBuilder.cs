@@ -25,15 +25,13 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
             return;
 
         var names = indexedEntity.GetNames();
-        var byKeys = indexedEntity.ByKeys();
+        var byKey = indexedEntity.ByParent();
         HashSet<Key> nodesKeys = [];
 
-        for (var i = 0; i < byKeys.Length; i++)
-        {
-            nodesKeys.Add(byKeys[i]);
-        }
+        if (byKey is not null)
+            nodesKeys.Add(byKey);
 
-        foreach (var node in indexedEntity.ChainedKeys())
+        foreach (var node in indexedEntity.Parents())
         {
             nodesKeys.Add(node);
 
@@ -60,7 +58,7 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
                     continue;
 
                 WordMatchMeta wordMatchMeta = new(key.Id, wordNamePosition, phraseType);
-                EntitiesByWordsIndex.AddMatch(wordId, key.Type, byKeys, wordMatchMeta);
+                EntitiesByWordsIndex.AddMatch(wordId, key.Type, byKey, wordMatchMeta);
             }
         }
 
