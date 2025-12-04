@@ -16,7 +16,8 @@ public class DefaultPharseSplitter : IPhraseSplitter
         '.',
         ',',
         '^',
-        '\''
+        '\'',
+        '-'
     };
 
     /// <summary>
@@ -34,15 +35,8 @@ public class DefaultPharseSplitter : IPhraseSplitter
 
     private static IEnumerable<string> TokenSplit(string word)
     {
-        foreach (var preSplit in word.Split('-', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
-        {
-            foreach (var i in SearchAllDigitWordCombinations(preSplit))
-            {
-                yield return i.Length > 250
-                    ? i[..250]
-                    : i;
-            }
-        }
+        foreach (var i in SearchAllDigitWordCombinations(word))
+            yield return i.Length > 250 ? i[..250] : i;
     }
 
     private static IEnumerable<string> SearchAllDigitWordCombinations(string value)
