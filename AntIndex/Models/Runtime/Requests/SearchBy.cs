@@ -23,7 +23,7 @@ public class SearchBy(
     public override void ProcessRequest(
         AntHill index,
         SearchContextBase searchContext,
-        Dictionary<int, ushort>[] wordsBundle,
+        Dictionary<int, byte>[] wordsBundle,
         CancellationToken ct)
     {
         if (!index.Entities.TryGetValue(EntityType, out var entities)

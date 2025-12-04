@@ -91,22 +91,22 @@ public class AntHill
     {
         var ct = cancellationToken ?? new CancellationTokenSource(searchContext.TimeoutMs).Token;
 
-        Dictionary<int, ushort>[] wordsBundle = SearchSimlarIndexWordsByQuery(searchContext);
+        Dictionary<int, byte>[] wordsBundle = SearchSimlarIndexWordsByQuery(searchContext);
 
         foreach (var i in searchContext.Request)
             i.ProcessRequest(this, searchContext, wordsBundle, ct);
     }
 
-    private Dictionary<int, ushort>[] SearchSimlarIndexWordsByQuery<TContext>(TContext searchContext)
+    private Dictionary<int, byte>[] SearchSimlarIndexWordsByQuery<TContext>(TContext searchContext)
         where TContext : SearchContextBase
     {
-        var result = new Dictionary<int, ushort>[searchContext.SplittedQuery.Length];
+        var result = new Dictionary<int, byte>[searchContext.SplittedQuery.Length];
 
         for (int i = 0; i < result.Length; i++)
         {
             QueryWordContainer currentWord = searchContext.SplittedQuery[i];
 
-            //Проверка на введеное слово ранее, чтобне повторять вычисления
+            //Проверка на введеное слово ранее, чтоб не повторять вычисления
             for (int j = i - 1; j >= 0; j--)
             {
                 if (searchContext.SplittedQuery[j].QueryWord.Equals(currentWord.QueryWord))
@@ -128,12 +128,12 @@ public class AntHill
         return result;
     }
 
-    private Dictionary<int, ushort> SearchSimilarWordByQueryAndAlternatives(
+    private Dictionary<int, byte> SearchSimilarWordByQueryAndAlternatives(
         QueryWordContainer wordContainer,
         double similarityTreshold,
         int maxBundleLength)
     {
-        Dictionary<int, ushort>? result = null;
+        Dictionary<int, byte>? result = null;
 
         SearchSimilars(wordContainer.QueryWord, false);
 
@@ -155,9 +155,9 @@ public class AntHill
 
             var similars = GetSimilarWords(queryWord, treshold);
 
-            result ??= new Dictionary<int, ushort>(similars.Count);
+            result ??= new Dictionary<int, byte>(similars.Count);
 
-            foreach (KeyValuePair<int, ushort> item in similars
+            foreach (KeyValuePair<int, byte> item in similars
                 .Where(i => ValidateWord(queryWord, i, treshold))
                 .OrderByDescending(i => i.Value))
             {
@@ -172,7 +172,7 @@ public class AntHill
         }
     }
 
-    private bool ValidateWord(Word queryWord, KeyValuePair<int, ushort> indexWordMathes, int treshold)
+    private bool ValidateWord(Word queryWord, in KeyValuePair<int, byte> indexWordMathes, int treshold)
     {
         if (indexWordMathes.Value < treshold)
             return false;
@@ -213,12 +213,12 @@ public class AntHill
     /// <param name="queryWord"></param>
     /// <param name="treshold"></param>
     /// <returns>Словарь id слова, количество ngramm</returns>
-    private Dictionary<int, ushort> GetSimilarWords(Word queryWord, int treshold)
+    private Dictionary<int, byte> GetSimilarWords(Word queryWord, int treshold)
     {
         var wordLength = queryWord.NGrammsHashes.Length;
 
         //Считаем количество совпавших ngramm для каждого слова
-        Dictionary<int, ushort> words = new(400_000);
+        Dictionary<int, byte> words = new(400_000);
 
         for (int queryWordNgrammIndex = 0; queryWordNgrammIndex < wordLength; queryWordNgrammIndex++)
         {
