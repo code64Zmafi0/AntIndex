@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace AntIndex.Services.Normalizing.Implementations;
+namespace AntIndex.Services.Normalizing;
 
 public class DefaultNormalizer : INormalizer
 {
