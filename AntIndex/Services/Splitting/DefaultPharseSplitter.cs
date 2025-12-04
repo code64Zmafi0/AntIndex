@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace AntIndex.Services.Splitting.Implementations;
+namespace AntIndex.Services.Splitting;
 
 public class DefaultPharseSplitter : IPhraseSplitter
 {
