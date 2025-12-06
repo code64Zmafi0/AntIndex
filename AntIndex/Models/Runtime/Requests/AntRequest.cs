@@ -7,8 +7,6 @@ public abstract class AntRequest(byte entityType, Func<IEnumerable<EntityMatches
 {
     public byte EntityType { get; } = entityType;
 
-    public bool IsVisible { get; set; } = true;
-
     public Dictionary<Key, EntityMatchesBundle> SearchResult { get; set; } = [];
 
     public Func<IEnumerable<EntityMatchesBundle>, IEnumerable<EntityMatchesBundle>>? Filter { get; set; } = filter;
@@ -19,8 +17,6 @@ public abstract class AntRequest(byte entityType, Func<IEnumerable<EntityMatches
         Dictionary<int, byte>[] wordsBundle,
         CancellationToken ct);
 
-    public IEnumerable<EntityMatchesBundle> GetResults()
-        => IsVisible 
-            ? Filter?.Invoke(SearchResult.Values) ?? SearchResult.Values
-            : [];
+    public IEnumerable<EntityMatchesBundle> GetFilteredResult()
+        => Filter?.Invoke(SearchResult.Values) ?? SearchResult.Values;
 }

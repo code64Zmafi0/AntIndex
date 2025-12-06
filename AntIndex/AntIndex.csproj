@@ -9,8 +9,8 @@
     <Authors>code64Zmafi0</Authors>
     <Description>Linked data text search engine.</Description>
     <RepositoryUrl>https://github.com/code64Zmafi0/AntIndex</RepositoryUrl>
-    <PackageTags>search; index; realtions; data;</PackageTags>
-    <Version>2.1.0</Version>
+    <PackageTags>search; index; relations; data;</PackageTags>
+    <Version>2.1.2</Version>
   </PropertyGroup>
 
   <ItemGroup>

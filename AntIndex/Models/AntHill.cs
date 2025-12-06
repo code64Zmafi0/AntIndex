@@ -30,39 +30,43 @@ public class AntHill
     public int EntitesCount => Entities.Sum(i => i.Value.Count);
 
     #region Search
-    public List<TypeSearchResult> SearchTypes<TContext>(TContext searchContext, (byte Type, int Take)[] selectTypes, CancellationToken? cancellationToken = null)
+    public TypeSearchResult[] SearchTypes<TContext>(TContext searchContext, (byte Type, int Take)[] selectTypes, CancellationToken? cancellationToken = null)
         where TContext : SearchContextBase
     {
         SearchInternal(searchContext, cancellationToken);
 
-        var result = new List<TypeSearchResult>();
+        var result = new TypeSearchResult[selectTypes.Length];
 
-        foreach ((short Type, int Take) in selectTypes)
+        for (int i = 0; i < selectTypes.Length; i++)
         {
+            (byte Type, int Take) = selectTypes[i];
             AntRequest? request = Array.Find(searchContext.Request, i => i is not AppendChilds && i.EntityType == Type);
 
             if (request is null)
+            {
+                result[i] = new(Type, []);
                 continue;
+            }
 
             var typeResult = searchContext
                 .PostProcessing(request
-                    .GetResults()
-                    .OrderByDescending(i =>
+                    .GetFilteredResult()
+                    .OrderByDescending(matchBundle =>
                     {
-                        i.Score = CalculateScore(i, searchContext);
-                        return i.Score;
+                        matchBundle.Score = CalculateScore(matchBundle, searchContext);
+                        return matchBundle.Score;
                     })
                 )
                 .Take(Take)
-                .ToList();
+                .ToArray();
 
-            result.Add(new(request.EntityType, typeResult));
+            result[i] = new(request.EntityType, typeResult);
         }
 
         return result;
     }
 
-    public List<EntityMatchesBundle> Search<TContext>(TContext searchContext, int take = 30, CancellationToken? cancellationToken = null)
+    public EntityMatchesBundle[] Search<TContext>(TContext searchContext, int take = 30, CancellationToken? cancellationToken = null)
         where TContext : SearchContextBase
     {
         SearchInternal(searchContext, cancellationToken);
@@ -74,13 +78,14 @@ public class AntHill
                 return i.Score;
             }))
             .Take(take)
-            .ToList();
+            .ToArray();
 
         IEnumerable<EntityMatchesBundle> GetAllResults()
         {
-            foreach (var request in searchContext.Request)
+            for (int i = 0; i < searchContext.Request.Length; i++)
             {
-                foreach (var item in request.GetResults())
+                AntRequest? request = searchContext.Request[i];
+                foreach (var item in request.GetFilteredResult())
                     yield return item;
             }
         }

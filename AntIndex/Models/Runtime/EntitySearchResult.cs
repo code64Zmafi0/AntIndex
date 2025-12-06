@@ -2,11 +2,11 @@
 
 namespace AntIndex.Models.Runtime;
 
-public class TypeSearchResult(byte type, List<EntityMatchesBundle> result)
+public class TypeSearchResult(byte type, EntityMatchesBundle[] result)
 {
     public byte Type { get; } = type;
 
-    public List<EntityMatchesBundle> Result { get; } = result;
+    public EntityMatchesBundle[] Result { get; } = result;
 }
 
 public class EntityMatchesBundle(EntityMeta entityMeta)
