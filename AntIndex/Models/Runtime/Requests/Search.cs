@@ -54,14 +54,14 @@ public class Search(
 
                 int wordId = indexWordInfo.Key;
 
-                List<WordMatchMeta>? list = index.EntitiesByWordsIndex.GetMatchesByWord(wordId, EntityType);
+                WordMatchMeta[]? list = index.EntitiesByWordsIndex.GetMatchesByWord(wordId, EntityType);
 
                 if (list is null)
                     continue;
 
                 ck.IncrementMatch();
 
-                for (int i = 0; i < list.Count; i++)
+                for (int i = 0; i < list.Length; i++)
                 {
                     if (ct.IsCancellationRequested)
                         return;

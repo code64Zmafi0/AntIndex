@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using ProtoBuf;
+﻿using ProtoBuf;
 
 namespace AntIndex.Models.Index;
 
@@ -7,9 +6,9 @@ namespace AntIndex.Models.Index;
 public class EntitiesByWordsIndex()
 {
     [ProtoMember(1)]
-    public Dictionary<int /*WordId*/, Dictionary<byte /*TypeId*/, Dictionary</*ByNodeKey*/ Key, List<WordMatchMeta>>>> EntitiesByWords { get; } = [];
+    public Dictionary<int /*WordId*/, Dictionary<byte /*TypeId*/, Dictionary</*ByNodeKey*/ Key, WordMatchMeta[]>>> EntitiesByWords { get; set; } = [];
 
-    public List<WordMatchMeta>? GetMatchesByWord(int wordId, byte entityType)
+    public WordMatchMeta[]? GetMatchesByWord(int wordId, byte entityType)
     {
         if (EntitiesByWords.TryGetValue(wordId, out var wordMatches)
             && wordMatches.TryGetValue(entityType, out var mathesBundle)
@@ -35,40 +34,8 @@ public class EntitiesByWordsIndex()
             if (!mathesBundle.TryGetValue(byKey, out var entityMatches))
                 continue;
 
-            for (int i = 0; i < entityMatches.Count; i++)
+            for (int i = 0; i < entityMatches.Length; i++)
                 yield return entityMatches[i];
-        }
-    }
-
-    public void AddMatch(int wordId, byte entityType, Key? byKey, WordMatchMeta wordMatch)
-    {
-        ref var wordMatches = ref CollectionsMarshal.GetValueRefOrAddDefault(EntitiesByWords, wordId, out var exists);
-
-        if (!exists)
-            wordMatches = [];
-
-        ref var matchesBundle = ref CollectionsMarshal.GetValueRefOrAddDefault(wordMatches!, entityType, out exists);
-
-        if (!exists)
-            matchesBundle = [];
-
-        if (byKey is not null)
-        {
-            ref var matches = ref CollectionsMarshal.GetValueRefOrAddDefault(matchesBundle!, byKey, out exists);
-
-            if (!exists)
-                matches = [];
-
-            matches!.Add(wordMatch);
-        }
-        else
-        {
-            ref var matches = ref CollectionsMarshal.GetValueRefOrAddDefault(matchesBundle!, Key.Default, out exists);
-
-            if (!exists)
-                matches = [];
-
-            matches!.Add(wordMatch);
         }
     }
 
@@ -78,16 +45,13 @@ public class EntitiesByWordsIndex()
         {
             foreach (var subCollection in collection)
             {
-                Dictionary<Key, List<WordMatchMeta>> res = subCollection.Value.Select(i =>
+                Dictionary<Key, WordMatchMeta[]> res = subCollection.Value.Select(i =>
                 {
-                    List<WordMatchMeta> mathes = i.Value;
-                    mathes.TrimExcess();
-
                     var key = i.Key.Equals(Key.Default)
                         ? Key.Default
                         : GetKey(i.Key);
 
-                    return new KeyValuePair<Key, List<WordMatchMeta>>(key, mathes);
+                    return new KeyValuePair<Key, WordMatchMeta[]>(key, i.Value);
                 })
                 .ToDictionary();
 

@@ -342,7 +342,6 @@ public class AntHill
         WordsIdsByNgramms.TrimExcess();
         EntitiesByWordsIndex.Trim(GetKey);
 
-
         GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive);
     }

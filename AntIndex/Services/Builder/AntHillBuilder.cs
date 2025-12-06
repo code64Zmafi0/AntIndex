@@ -14,7 +14,7 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
 {
     private readonly Dictionary<byte, Dictionary<int, EntityMeta>> Entities = [];
     private readonly Dictionary<Key, HashSet<Key>> Childs = [];
-    private readonly EntitiesByWordsIndex EntitiesByWordsIndex = new();
+    private readonly EntitiesByWordsBuilder EntitiesByWordsIndex = new();
     private readonly WordsBuildBundle WordsBundle = new();
 
     public void AddEntity(in IIndexedEntity indexedEntity)
@@ -111,7 +111,7 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
         {
             Entities = Entities,
             WordsByIds = wordsByIds,
-            EntitiesByWordsIndex = EntitiesByWordsIndex,
+            EntitiesByWordsIndex = EntitiesByWordsIndex.CreateIndex(),
             WordsIdsByNgramms = wordsIdsByNgramms.ToDictionary(i => i.Key, i => i.Value.ToArray()),
         };
     }
