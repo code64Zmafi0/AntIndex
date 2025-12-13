@@ -1,11 +1,6 @@
-﻿using System;
-using System.Runtime;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using AntIndex.Interfaces;
+﻿using AntIndex.Interfaces;
 using AntIndex.Models;
 using AntIndex.Models.Index;
-using AntIndex.Models.Runtime;
 using AntIndex.Services.Builder;
 using AntIndex.Services.Normalizing;
 using AntIndex.Services.Splitting;
@@ -43,7 +38,7 @@ public static class Ant
     {
         var normalized = $" {word} ";
 
-        int[] result = new int[word.Length + 1];
+        int[] result = new int[word.Length + NGRAM_LENGTH - 1];
 
         for (var i = 0; i <= normalized.Length - NGRAM_LENGTH; i++)
         {

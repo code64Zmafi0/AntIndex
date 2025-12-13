@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using AntIndex.Models.Abstract;
 using AntIndex.Models.Index;
@@ -6,15 +7,17 @@ using AntIndex.Models.Index;
 namespace AntIndex.Models.Runtime.Requests;
 
 /// <summary>
-/// Выполняет поиск сущностей целевого типа по найденным родителям (ByKey)
+/// Выполняет поиск сущностей целевого типа по найденным родителям (Parent)
 /// </summary>
 /// <param name="entityType">Целевой тип сущности</param>
-/// <param name="parentType">Тип сущности родителя (ByKey)</param>
-/// <param name="filter">Фильтр результатов</param>
+/// <param name="byType">Тип сущности родителя (Parent)</param>
+/// <param name="resultVisionFilter">Фильтр отображения результатов в итоговом списке поиска</param>
+/// <param name="filter">Фильтр добавления в словарь найденных</param>
 public class SearchBy(
     byte entityType,
-    byte parentType,
-    Func<IEnumerable<EntityMatchesBundle>, IEnumerable<EntityMatchesBundle>>? filter = null) : AntRequest(entityType, filter)
+    byte byType,
+    Func<IEnumerable<EntityMatchesBundle>, IEnumerable<EntityMatchesBundle>>? resultVisionFilter = null,
+    Func<Key, bool>? filter = null) : AntRequest(entityType, resultVisionFilter, filter)
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public virtual IEnumerable<Key> SelectParents(AntRequest parentRequest)
@@ -27,10 +30,8 @@ public class SearchBy(
         CancellationToken ct)
     {
         if (!index.Entities.TryGetValue(EntityType, out var entities)
-            || !(searchContext.GetRequestByType(parentType) is { } byStrat))
+            || !(searchContext.GetRequestByType(byType) is { } byStrat))
             return;
-
-        var searchedEntities = new Dictionary<Key, EntityMatchesBundle>();
 
         for (int queryWordPosition = 0; queryWordPosition < wordsBundle.Length; queryWordPosition++)
         {
@@ -59,7 +60,10 @@ public class SearchBy(
                     EntityMeta entityMeta = entities[wordMatchMeta.EntityId];
                     Key entityKey = entityMeta.Key;
 
-                    ref var entityMatch = ref CollectionsMarshal.GetValueRefOrAddDefault(searchedEntities, entityKey, out var exists);
+                    if (!((Filter?.Invoke(entityKey)) ?? false))
+                        continue;
+
+                    ref var entityMatch = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, entityKey, out var exists);
 
                     if (!exists)
                         entityMatch = new(entityMeta);
@@ -74,7 +78,5 @@ public class SearchBy(
                     ck.IncrementMatch();
             }
         }
-
-        SearchResult = searchedEntities;
     }
 }

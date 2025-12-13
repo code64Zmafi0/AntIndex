@@ -9,7 +9,7 @@ public interface IIndexedEntity
 
     IEnumerable<Phrase> GetNames();
 
-    IEnumerable<Key> Parents();
+    IEnumerable<Key> Links();
 
-    Key? ByParent();
+    Key? Parent();
 }

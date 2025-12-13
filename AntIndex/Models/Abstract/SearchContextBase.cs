@@ -41,16 +41,16 @@ public abstract class SearchContextBase(
     public virtual IOrderedEnumerable<EntityMatchesBundle> PostProcessing(IOrderedEnumerable<EntityMatchesBundle> result)
         => result;
 
-    public virtual double GetEntityNodeMiltipler(byte entityType, byte chainedNodeType)
+    public virtual double GetLinkedEntityMatchMiltipler(byte entityType, byte linkedType)
         => 1;
 
     public virtual double GetPhraseTypeMultipler(byte phraseType)
         => 1;
 
-    public virtual RuleScore? OnChainedNodeMatched(Key entityKey, Key chainedKey)
+    public virtual AdditionalRule? OnLinkedEntityMatched(Key entityKey, Key linkedKey)
         => null;
 
-    public virtual RuleScore? OnEntityProcessed(EntityMatchesBundle entityMatchsBundle)
+    public virtual AdditionalRule? OnEntityProcessed(EntityMatchesBundle entityMatchesBundle)
         => null;
 
     public virtual int TimeoutMs

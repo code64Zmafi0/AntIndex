@@ -50,7 +50,7 @@ public class AntHill
 
             var typeResult = searchContext
                 .PostProcessing(request
-                    .GetFilteredResult()
+                    .GetVisibleResults()
                     .OrderByDescending(matchBundle =>
                     {
                         matchBundle.Score = CalculateScore(matchBundle, searchContext);
@@ -85,7 +85,7 @@ public class AntHill
             for (int i = 0; i < searchContext.Request.Length; i++)
             {
                 AntRequest? request = searchContext.Request[i];
-                foreach (var item in request.GetFilteredResult())
+                foreach (var item in request.GetVisibleResults())
                     yield return item;
             }
         }
@@ -256,7 +256,7 @@ public class AntHill
         CalculateNodeMatchesScore(in wordsScores, searchContext, entityMatchesBundle.WordsMatches, 1);
 
         //Считаем совпадения в связанных нодах
-        Key[] nodes = entityMatchesBundle.EntityMeta.Nodes;
+        Key[] nodes = entityMatchesBundle.EntityMeta.Links;
         for (int i = 0; i < nodes.Length; i++)
         {
             Key nodeKey = nodes[i];
@@ -264,20 +264,24 @@ public class AntHill
             if (searchContext.GetRequestByType(nodeKey.Type) is { } req
                 && req.SearchResult.TryGetValue(nodeKey, out var chaiedMathes))
             {
-                double nodeMultipler = searchContext.GetEntityNodeMiltipler(entityMatchesBundle.Key.Type, nodeKey.Type);
+                double nodeMultipler = searchContext.GetLinkedEntityMatchMiltipler(entityMatchesBundle.Key.Type, nodeKey.Type);
                 CalculateNodeMatchesScore(in wordsScores, searchContext, chaiedMathes.WordsMatches, nodeMultipler);
 
-                if (searchContext.OnChainedNodeMatched(entityMatchesBundle.Key, nodeKey) is { } chainedMatchRule)
+                if (searchContext.OnLinkedEntityMatched(entityMatchesBundle.Key, nodeKey) is { } chainedMatchRule)
                     entityMatchesBundle.Rules.Add(chainedMatchRule);
             }
         }
 
-        var resultScore = 0;
+        if (searchContext.OnEntityProcessed(entityMatchesBundle) is { } rule)
+            entityMatchesBundle.Rules.Add(rule);
+
+        int resultScore = 0;
+
         for (int i = 0; i < wordsScores.Length; i++)
             resultScore += wordsScores[i];
 
-        if (searchContext.OnEntityProcessed(entityMatchesBundle) is { } rule)
-            entityMatchesBundle.Rules.Add(rule);
+        for (int i = 0; i < entityMatchesBundle.Rules.Count; i++)
+            resultScore += entityMatchesBundle.Rules[i].Score;
 
         return resultScore;
     }
@@ -311,18 +315,20 @@ public class AntHill
     public void Trim()
     {
         Key GetKey(Key key)
-            => Entities[key.Type][key.Id].Key;
+            => Entities.TryGetValue(key.Type, out var entities) && entities.TryGetValue(key.Id, out var meta)
+            ? meta.Key
+            : key;
 
         foreach (var collection in Entities.Values)
         {
             foreach (var meta in collection.Values)
             {
-                if (meta.Nodes.Length == 0)
-                    meta.Nodes = Array.Empty<Key>();
+                if (meta.Links.Length == 0)
+                    meta.Links = Array.Empty<Key>();
                 else
                 {
-                    for (int i = 0; i < meta.Nodes.Length; i++)
-                        meta.Nodes[i] = GetKey(meta.Nodes[i]);
+                    for (int i = 0; i < meta.Links.Length; i++)
+                        meta.Links[i] = GetKey(meta.Links[i]);
                 }
 
                 if (meta.Childs.Length == 0)

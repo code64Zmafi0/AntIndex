@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using AntIndex.Interfaces;
 using AntIndex.Models;
 using AntIndex.Models.Index;
@@ -25,17 +24,18 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
             return;
 
         var names = indexedEntity.GetNames();
-        var byKey = indexedEntity.ByParent();
-        HashSet<Key> nodesKeys = [];
+        var byKey = indexedEntity.Parent();
+
+        HashSet<Key> linksKeys = [];
 
         if (byKey is not null)
-            nodesKeys.Add(byKey);
+            linksKeys.Add(byKey);
 
-        foreach (var node in indexedEntity.Parents())
+        foreach (var link in indexedEntity.Links())
         {
-            nodesKeys.Add(node);
+            linksKeys.Add(link);
 
-            ref var set = ref CollectionsMarshal.GetValueRefOrAddDefault(Childs, node, out var exists);
+            ref var set = ref CollectionsMarshal.GetValueRefOrAddDefault(Childs, link, out var exists);
 
             if (!exists)
                 set = [];
@@ -67,7 +67,7 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
         if (!containsType)
             byTypeEntiteies = [];
 
-        byTypeEntiteies![key.Id] = new(key, [.. nodesKeys]);
+        byTypeEntiteies![key.Id] = new(key, [.. linksKeys]);
     }
 
     private static (string[] TokenizedPhrase, byte PhraseType)[] GetNamesToBuild(

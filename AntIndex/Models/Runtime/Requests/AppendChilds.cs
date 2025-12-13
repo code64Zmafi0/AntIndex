@@ -8,13 +8,13 @@ namespace AntIndex.Models.Runtime.Requests;
 /// </summary>
 /// <param name="parentType">Тип родителя</param>
 /// <param name="entityType">Целевой тип</param>
-/// <param name="appendFilter">Фильтр для дочерних сущностей КАЖДОГО родителя</param>
-/// <param name="fromTop">Топ родителей для добавления дочерних</param>
+/// <param name="appendFilter">Фильтр дочерних сущностей КАЖДОГО родителя</param>
+/// <param name="parentByTop">Топ родителей по prescore для добавления дочерних</param>
 public class AppendChilds(
     byte parentType,
     byte entityType,
     Func<IEnumerable<Key>, IEnumerable<Key>> appendFilter,
-    int fromTop = 0) : AntRequest(entityType)
+    int parentByTop = 0) : AntRequest(entityType, null, null)
 {
     public override void ProcessRequest(
         AntHill index,
@@ -28,12 +28,12 @@ public class AppendChilds(
         {
             IEnumerable<Key> GetKeys()
             {
-                if (fromTop < 1)
+                if (parentByTop < 1)
                     return from.SearchResult.Keys;
                 else
                     return from.SearchResult
                         .OrderByDescending(i => i.Value.Prescore)
-                        .Take(fromTop)
+                        .Take(parentByTop)
                         .Select(i => i.Key);
             }
 
@@ -42,7 +42,10 @@ public class AppendChilds(
                 if (ct.IsCancellationRequested)
                     break;
 
-                var parentEntityChilds = index.Entities[i.Type][i.Id].Childs;
+                if (!(index.Entities.TryGetValue(i.Type, out var byEntities) && byEntities.TryGetValue(i.Id, out var byParent)))
+                    continue;
+
+                var parentEntityChilds = byParent.Childs;
 
                 foreach (var child in appendFilter(parentEntityChilds.Where(i => i.Type == EntityType)))
                 {

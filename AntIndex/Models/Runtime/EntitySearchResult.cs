@@ -22,7 +22,7 @@ public class EntityMatchesBundle(EntityMeta entityMeta)
 
     public int Score;
 
-    public List<RuleScore> Rules { get; } = [];
+    public List<AdditionalRule> Rules { get; } = [];
 
     internal void AddMatch(WordCompareResult wordCompareResult)
     {
@@ -36,4 +36,4 @@ public record WordCompareResult(
     WordMatchMeta MatchMeta,
     int MatchLength);
 
-public record RuleScore(ushort RuleType, ushort Score);
+public record AdditionalRule(string Name, int Score);

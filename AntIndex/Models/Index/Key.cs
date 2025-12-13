@@ -7,10 +7,7 @@ public class Key : IEquatable<Key>
 {
     public static readonly Key Default = new(0, 0);
 
-    public Key()
-    {
-
-    }
+    public Key() { }
 
     public Key(byte type, int id)
     {

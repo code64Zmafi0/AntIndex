@@ -8,15 +8,15 @@ namespace AntIndex.Models.Runtime.Requests;
 /// Выполняет поиск сущностей целевого типа
 /// </summary>
 /// <param name="entityType">Целевой тип сущности</param>
-/// <param name="filter">Фильтр результатов</param>
-/// <param name="forceSelect">Принудительное получение сущностей целеовго типа по id</param>
-/// <param name="onlyForced">Не производит поиск по индексу</param>
+/// <param name="resultVisionFilter">Фильтр отображения результатов в итоговом списке поиска</param>
+/// <param name="filter">Фильтр добавления в словарь найденных</param>
+/// <param name="forceSelect">Принудительное добаваления сущностей целеовго типа по id</param>
 public class Search(
     byte entityType,
-    Func<IEnumerable<EntityMatchesBundle>, IEnumerable<EntityMatchesBundle>>? filter = null,
-    IEnumerable<int>? forceSelect = null,
-    bool onlyForced = false)
-    : AntRequest(entityType, filter)
+    Func<IEnumerable<EntityMatchesBundle>, IEnumerable<EntityMatchesBundle>>? resultVisionFilter = null,
+    Func<Key, bool>? filter = null,
+    IEnumerable<int>? forceSelect = null)
+    : AntRequest(entityType, resultVisionFilter, filter)
 {
     public override void ProcessRequest(
         AntHill index,
@@ -27,18 +27,10 @@ public class Search(
         if (!index.Entities.TryGetValue(EntityType, out var entities))
             return;
 
-        var searchedEntities = new Dictionary<Key, EntityMatchesBundle>();
-
         foreach (int id in forceSelect ?? [])
         {
             if (entities.TryGetValue(id, out EntityMeta? meta))
-                searchedEntities.TryAdd(meta.Key, new(meta));
-        }
-
-        if (onlyForced && forceSelect is not null)
-        {
-            SearchResult = searchedEntities;
-            return;
+                SearchResult.TryAdd(meta.Key, new(meta));
         }
 
         for (int queryWordPosition = 0; queryWordPosition < wordsBundle.Length; queryWordPosition++)
@@ -70,7 +62,10 @@ public class Search(
                     EntityMeta entityMeta = entities[wordMatchMeta.EntityId];
                     Key entityKey = entityMeta.Key;
 
-                    ref var entityMatch = ref CollectionsMarshal.GetValueRefOrAddDefault(searchedEntities, entityKey, out var exists);
+                    if (!((Filter?.Invoke(entityKey)) ?? false))
+                        continue;
+
+                    ref var entityMatch = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, entityKey, out var exists);
 
                     if (!exists)
                         entityMatch = new(entityMeta);
@@ -82,7 +77,5 @@ public class Search(
                 }
             }
         }
-
-        SearchResult = searchedEntities;
     }
 }
