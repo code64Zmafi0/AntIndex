@@ -11,7 +11,7 @@
     <RepositoryUrl>https://github.com/code64Zmafi0/AntIndex</RepositoryUrl>
     <PackageTags>search; index; relations; data;</PackageTags>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
-    <Version>2.2.1</Version>
+    <Version>2.2.2</Version>
   </PropertyGroup>
 
   <ItemGroup>

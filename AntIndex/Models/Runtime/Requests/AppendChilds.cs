@@ -19,7 +19,7 @@ public class AppendChilds(
     public override void ProcessRequest(
         AntHill index,
         SearchContextBase searchContext,
-        Dictionary<int, byte>[] wordsBundle,
+        List<KeyValuePair<int, byte>>[] wordsBundle,
         CancellationToken ct)
     {
         if (searchContext.GetRequestByType(parentType) is { } from

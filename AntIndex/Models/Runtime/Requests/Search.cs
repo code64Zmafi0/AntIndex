@@ -21,7 +21,7 @@ public class Search(
     public override void ProcessRequest(
         AntHill index,
         SearchContextBase searchContext,
-        Dictionary<int, byte>[] wordsBundle,
+        List<KeyValuePair<int, byte>>[] wordsBundle,
         CancellationToken ct)
     {
         if (!index.Entities.TryGetValue(EntityType, out var entities))
@@ -35,12 +35,16 @@ public class Search(
 
         for (int queryWordPosition = 0; queryWordPosition < wordsBundle.Length; queryWordPosition++)
         {
-            var ck = searchContext.Perfomance.GetPerfomancer(wordsBundle[queryWordPosition].Count);
+            List<KeyValuePair<int, byte>> currentBundle = wordsBundle[queryWordPosition];
 
-            foreach (var indexWordInfo in wordsBundle[queryWordPosition])
+            var ck = searchContext.Perfomance.GetPerfomancer(currentBundle.Count);
+
+            for (int wbIndex = 0; wbIndex < currentBundle.Count; wbIndex++)
             {
                 if (!ck.NeedContinue)
                     break;
+
+                KeyValuePair<int, byte> indexWordInfo = currentBundle[wbIndex];
 
                 ck.IncrementCheck();
 
@@ -62,7 +66,7 @@ public class Search(
                     EntityMeta entityMeta = entities[wordMatchMeta.EntityId];
                     Key entityKey = entityMeta.Key;
 
-                    if (!((Filter?.Invoke(entityKey)) ?? false))
+                    if (!((Filter?.Invoke(entityKey)) ?? true))
                         continue;
 
                     ref var entityMatch = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, entityKey, out var exists);

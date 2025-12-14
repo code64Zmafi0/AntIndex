@@ -2,9 +2,9 @@
 
 namespace AntIndex.Services.Splitting;
 
-public class DefaultPharseSplitter : IPhraseSplitter
+public class DefaultPhraseSplitter : IPhraseSplitter
 {
-    public static readonly DefaultPharseSplitter Instance = new();
+    public static readonly DefaultPhraseSplitter Instance = new();
 
     private static readonly char[] _splitChars =
     {

@@ -17,7 +17,7 @@ public abstract class AntRequest(
     public abstract void ProcessRequest(
         AntHill index,
         SearchContextBase searchContext,
-        Dictionary<int, byte>[] wordsBundle,
+        List<KeyValuePair<int, byte>>[] wordsBundle,
         CancellationToken ct);
 
     public IEnumerable<EntityMatchesBundle> GetVisibleResults()

@@ -96,16 +96,16 @@ public class AntHill
     {
         var ct = cancellationToken ?? new CancellationTokenSource(searchContext.TimeoutMs).Token;
 
-        Dictionary<int, byte>[] wordsBundle = SearchSimlarIndexWordsByQuery(searchContext);
+        List<KeyValuePair<int, byte>>[] wordsBundle = SearchSimlarIndexWordsByQuery(searchContext);
 
         foreach (var i in searchContext.Request)
             i.ProcessRequest(this, searchContext, wordsBundle, ct);
     }
 
-    private Dictionary<int, byte>[] SearchSimlarIndexWordsByQuery<TContext>(TContext searchContext)
+    private List<KeyValuePair<int, byte>>[] SearchSimlarIndexWordsByQuery<TContext>(TContext searchContext)
         where TContext : SearchContextBase
     {
-        var result = new Dictionary<int, byte>[searchContext.SplittedQuery.Length];
+        var result = new List<KeyValuePair<int, byte>>[searchContext.SplittedQuery.Length];
 
         for (int i = 0; i < result.Length; i++)
         {
@@ -133,51 +133,52 @@ public class AntHill
         return result;
     }
 
-    private Dictionary<int, byte> SearchSimilarWordByQueryAndAlternatives(
+    private List<KeyValuePair<int, byte>> SearchSimilarWordByQueryAndAlternatives(
         QueryWordContainer wordContainer,
         double similarityTreshold,
         int maxBundleLength)
     {
-        Dictionary<int, byte>? result = null;
-
-        SearchSimilars(wordContainer.QueryWord, false);
+        List<KeyValuePair<int, byte>> result = [];
 
         for (int i = 0; i < wordContainer.Alternatives.Length; i++)
-            SearchSimilars(wordContainer.Alternatives[i], true);
+            SearchAlternative(wordContainer.Alternatives[i], (byte)wordContainer.QueryWord.NGrammsHashes.Length);
 
-        return result ?? [];
+        SearchSimilars(wordContainer.QueryWord);
+
+        return result;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void SearchSimilars(Word queryWord, bool isAlterantive)
+        void SearchSimilars(Word queryWord)
         {
-            int treshold;
-            if (isAlterantive)
-                treshold = 1;
-            else
-                treshold = queryWord.IsDigit
-                    ? queryWord.NGrammsHashes.Length - 1
-                    : (int)(wordContainer.QueryWord.NGrammsHashes.Length * similarityTreshold);
+            int treshold = queryWord.IsDigit
+                ? queryWord.NGrammsHashes.Length - 1
+                : (int)(wordContainer.QueryWord.NGrammsHashes.Length * similarityTreshold);
 
-            var similars = GetSimilarWords(queryWord, treshold);
-
-            result ??= new Dictionary<int, byte>(similars.Count);
-
-            foreach (KeyValuePair<int, byte> item in similars
-                .Where(i => ValidateWord(queryWord, i, treshold))
+            foreach (KeyValuePair<int, byte> item in GetSimilarWords(queryWord, treshold)
+                .Where(i => ValidateSimilarWord(queryWord, i, treshold))
                 .OrderByDescending(i => i.Value))
             {
                 if (result.Count > maxBundleLength)
                     return;
 
-                ref var matchInfo = ref CollectionsMarshal.GetValueRefOrAddDefault(result, item.Key, out var exists);
-
-                if (!exists || item.Value > matchInfo)
-                    matchInfo = item.Value;
+                result.Add(item);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void SearchAlternative(Word altWord, byte queryWordLength)
+        {
+            int treshold = altWord.NGrammsHashes.Length;
+
+            if (GetSimilarWords(altWord, treshold).FirstOrDefault(i => ValidateAlternativeWord(i, treshold)) is { } item)
+                result.Add(new(item.Key, queryWordLength));
         }
     }
 
-    private bool ValidateWord(Word queryWord, in KeyValuePair<int, byte> indexWordMathes, int treshold)
+    private bool ValidateAlternativeWord(in KeyValuePair<int, byte> indexWordMathes, int treshold)
+        => indexWordMathes.Value == treshold && WordsByIds[indexWordMathes.Key].Length == treshold;
+
+    private bool ValidateSimilarWord(Word queryWord, in KeyValuePair<int, byte> indexWordMathes, int treshold)
     {
         if (indexWordMathes.Value < treshold)
             return false;
