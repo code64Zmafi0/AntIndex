@@ -83,8 +83,21 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
 
     public AntHill Build()
     {
-        foreach (var item in Childs)
-            Entities[item.Key.Type][item.Key.Id].Childs = [.. item.Value];
+        bool CheckMeta(Key key, out EntityMeta? meta)
+        {
+            meta = null;
+
+            return Entities.TryGetValue(key.Type, out var entitiesByIds)
+                   && entitiesByIds.TryGetValue(key.Id, out meta);
+        }
+
+        foreach (KeyValuePair<Key, HashSet<Key>> item in Childs)
+        {
+            if (CheckMeta(item.Key, out var meta))
+            {
+                meta!.Childs = [.. item.Value.Where(i => CheckMeta(i, out _))];
+            }
+        };
 
         Dictionary<int, HashSet<int>> wordsIdsByNgramms = [];
         Dictionary<int, int[]> wordsByIds = [];
