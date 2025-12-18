@@ -91,6 +91,11 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
                    && entitiesByIds.TryGetValue(key.Id, out meta);
         }
 
+        foreach (var entity in Entities.Values.SelectMany(i => i.Values))
+        {
+            entity.Childs = [.. entity.Childs.Where(i => CheckMeta(i, out _))];
+        }
+
         foreach (KeyValuePair<Key, HashSet<Key>> item in Childs)
         {
             if (CheckMeta(item.Key, out var meta))
