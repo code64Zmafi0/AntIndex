@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using AntIndex.Models.Abstract;
 using AntIndex.Models.Index;
@@ -13,15 +12,19 @@ namespace AntIndex.Models.Runtime.Requests;
 /// <param name="byType">Тип сущности родителя (Parent)</param>
 /// <param name="resultVisionFilter">Фильтр отображения результатов в итоговом списке поиска</param>
 /// <param name="filter">Фильтр добавления в словарь найденных</param>
+/// <param name="parentsFilter">Фильтр родителей по которым осущетсвляем поиск</param>
 public class SearchBy(
     byte entityType,
     byte byType,
     Func<IEnumerable<EntityMatchesBundle>, IEnumerable<EntityMatchesBundle>>? resultVisionFilter = null,
-    Func<Key, bool>? filter = null) : AntRequest(entityType, resultVisionFilter, filter)
+    Func<Key, bool>? filter = null,
+    Func<IEnumerable<EntityMatchesBundle>, IEnumerable<Key>>? parentsFilter = null) : AntRequest(entityType, resultVisionFilter, filter)
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public virtual IEnumerable<Key> SelectParents(AntRequest parentRequest)
-        => parentRequest.SearchResult.Keys;
+        => parentsFilter is null
+            ? parentRequest.SearchResult.Keys
+            : parentsFilter.Invoke(parentRequest.SearchResult.Values).ToArray();
 
     public override void ProcessRequest(
         AntHill index,
@@ -32,6 +35,8 @@ public class SearchBy(
         if (!index.Entities.TryGetValue(EntityType, out var entities)
             || !(searchContext.GetRequestByType(byType) is { } byStrat))
             return;
+
+        IEnumerable<Key> parents = SelectParents(byStrat);
 
         for (int queryWordPosition = 0; queryWordPosition < wordsBundle.Length; queryWordPosition++)
         {
@@ -54,7 +59,7 @@ public class SearchBy(
                 foreach (var wordMatchMeta in index.EntitiesByWordsIndex.GetMatchesByWordAndParents(
                     wordId,
                     EntityType,
-                    SelectParents(byStrat)))
+                    parents))
                 {
                     if (ct.IsCancellationRequested)
                         return;

@@ -4,7 +4,7 @@ using AntIndex.Models.Index;
 using AntIndex.Services.Builder;
 using AntIndex.Services.Normalizing;
 using AntIndex.Services.Splitting;
-using ProtoBuf;
+using MessagePack;
 
 namespace AntIndex.Services.Extensions;
 
@@ -105,7 +105,7 @@ public static class Ant
     public static T ReadAndDeserializeObject<T>(string filePath) where T : class
     {
         using Stream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-        return Serializer.Deserialize<T>(stream);
+        return MessagePackSerializer.Deserialize<T>(stream);
     }
 
     public static void WriteObject(string filePath, object obj)
@@ -120,7 +120,7 @@ public static class Ant
 
         using Stream stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
 
-        Serializer.Serialize(stream, obj);
+        MessagePackSerializer.Serialize(stream, obj);
     }
     #endregion
 }

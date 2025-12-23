@@ -1,8 +1,8 @@
-﻿using ProtoBuf;
+﻿using MessagePack;
 
 namespace AntIndex.Models.Index;
 
-[ProtoContract]
+[MessagePackObject]
 public class EntityMeta
 {
     public EntityMeta() { }
@@ -13,12 +13,12 @@ public class EntityMeta
         Links = nodes;
     }
 
-    [ProtoMember(1)]
+    [Key(1)]
     public Key Key { get; } = new(0, 0);
 
-    [ProtoMember(2)]
+    [Key(2)]
     public Key[] Links { get; set; } = Array.Empty<Key>();
 
-    [ProtoMember(3)]
+    [Key(3)]
     public Key[] Childs { get; set; } = Array.Empty<Key>();
 }

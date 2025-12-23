@@ -1,17 +1,17 @@
-﻿using ProtoBuf;
+﻿using MessagePack;
 
 namespace AntIndex.Models.Index;
 
-[ProtoContract]
+[MessagePackObject]
 public class WordMatchMeta
 {
-    [ProtoMember(1)]
+    [Key(1)]
     public int EntityId { get; }
 
-    [ProtoMember(2)]
+    [Key(2)]
     public byte NameWordPosition { get; }
 
-    [ProtoMember(3)]
+    [Key(3)]
     public byte PhraseType {  get; }
 
     public WordMatchMeta()

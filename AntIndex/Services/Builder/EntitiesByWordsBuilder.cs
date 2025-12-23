@@ -41,18 +41,22 @@ public class EntitiesByWordsBuilder()
 
     public EntitiesByWordsIndex CreateIndex()
     {
-        return new()
+        var entitiesByWords = new Dictionary<byte /*TypeId*/, Dictionary</*ByNodeKey*/ Key, WordMatchMeta[]>>[EntitiesByWords.Count];
+
+        foreach (var wordMatch in EntitiesByWords)
         {
-            EntitiesByWords = EntitiesByWords
+            entitiesByWords[wordMatch.Key] = wordMatch.Value
                 .ToDictionary(
                     i => i.Key,
                     i => i.Value
                         .ToDictionary(
                             i => i.Key,
-                            i => i.Value
-                                .ToDictionary(
-                                    i => i.Key,
-                                    i => i.Value.ToArray())))
+                            i => i.Value.ToArray()));
+        }
+
+        return new()
+        {
+            EntitiesByWords = entitiesByWords
         };
     }
 }

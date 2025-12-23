@@ -10,7 +10,7 @@ Linked data text search engine.
 - Designed to search for entities of different types (up to 250 types)
 - Support for data hierarchy and relatedness
 - Flexible sorting settings
-- Protobuf-enabled index file saving utilities
+- MessagePack binary serialization enabled index file saving utilities
 
 
 ## Documentation

@@ -1,17 +1,18 @@
-﻿using ProtoBuf;
+﻿using MessagePack;
 
 namespace AntIndex.Models.Index;
 
-[ProtoContract]
+[MessagePackObject]
 public class EntitiesByWordsIndex()
 {
-    [ProtoMember(1)]
-    public Dictionary<int /*WordId*/, Dictionary<byte /*TypeId*/, Dictionary</*ByNodeKey*/ Key, WordMatchMeta[]>>> EntitiesByWords { get; set; } = [];
+    [Key(1)]
+    public Dictionary<byte /*TypeId*/, Dictionary</*ByNodeKey*/ Key, WordMatchMeta[]>>[/*WordId*/] EntitiesByWords { get; set; } = [];
 
     public WordMatchMeta[]? GetMatchesByWord(int wordId, byte entityType)
     {
-        if (EntitiesByWords.TryGetValue(wordId, out var wordMatches)
-            && wordMatches.TryGetValue(entityType, out var mathesBundle)
+        var wordMatches = EntitiesByWords[wordId];
+
+        if (wordMatches.TryGetValue(entityType, out var mathesBundle)
             && mathesBundle.TryGetValue(Key.Default, out var matches))
         {
             return matches;
@@ -25,8 +26,9 @@ public class EntitiesByWordsIndex()
         byte entityType,
         IEnumerable<Key> parentKeys)
     {
-        if (!EntitiesByWords.TryGetValue(wordId, out var wordMatches)
-            || !wordMatches.TryGetValue(entityType, out var mathesBundle))
+        var wordMatches = EntitiesByWords[wordId];
+
+        if (!wordMatches.TryGetValue(entityType, out var mathesBundle))
             yield break;
 
         foreach (var byKey in parentKeys)
@@ -41,7 +43,7 @@ public class EntitiesByWordsIndex()
 
     public void Trim(Func<Key, Key> GetKey)
     {
-        foreach (var collection in EntitiesByWords.Values)
+        foreach (var collection in EntitiesByWords)
         {
             foreach (var subCollection in collection)
             {
@@ -62,7 +64,5 @@ public class EntitiesByWordsIndex()
 
             collection.TrimExcess();
         }
-
-        EntitiesByWords.TrimExcess();
     }
 }

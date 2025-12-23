@@ -1,8 +1,8 @@
-﻿using ProtoBuf;
+﻿using MessagePack;
 
 namespace AntIndex.Models.Index;
 
-[ProtoContract]
+[MessagePackObject]
 public class Key : IEquatable<Key>
 {
     public static readonly Key Default = new(0, 0);
@@ -15,10 +15,10 @@ public class Key : IEquatable<Key>
         Type = type;
     }
 
-    [ProtoMember(1)]
+    [Key(1)]
     public byte Type { get; }
 
-    [ProtoMember(2)]
+    [Key(2)]
     public int Id { get; }
 
     public bool Equals(Key? other)

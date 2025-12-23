@@ -105,7 +105,7 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
         };
 
         Dictionary<int, HashSet<int>> wordsIdsByNgramms = [];
-        Dictionary<int, int[]> wordsByIds = [];
+        int[][] wordsByIds = new int[WordsBundle.Pairs.Count][];
 
         foreach (var item in WordsBundle.GetWordsByIds())
         {
@@ -137,9 +137,9 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
 
 public class WordsBuildBundle()
 {
-    private int CurrentId = int.MinValue;
+    private int CurrentId = 0;
 
-    private readonly Dictionary<string, int> Pairs = [];
+    public readonly Dictionary<string, int> Pairs = [];
 
     public int GetWordId(string word)
     {
