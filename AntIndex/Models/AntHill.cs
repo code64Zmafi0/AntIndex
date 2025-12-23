@@ -221,6 +221,15 @@ public class AntHill
                 {
                     return false;
                 }
+                else if (ptr < queryWordHashes.Length - 1)
+                {
+                    if (queryWordHashes[ptr + 1] == indexWordHashes[i])
+                    {
+                        i--;
+                    }
+
+                    ptr++;
+                }
             }
         }
 
