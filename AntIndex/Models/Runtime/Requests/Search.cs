@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using AntIndex.Models.Abstract;
 using AntIndex.Models.Index;
+using AntIndex.Models.Runtime.AdditionalsRequests;
 
 namespace AntIndex.Models.Runtime.Requests;
 
@@ -15,10 +16,10 @@ public class Search(
     byte entityType,
     Func<IEnumerable<EntityMatchesBundle>, IEnumerable<EntityMatchesBundle>>? resultVisionFilter = null,
     Func<Key, bool>? filter = null,
-    IEnumerable<int>? forceSelect = null)
-    : AntRequest(entityType, resultVisionFilter, filter)
+    AdditionalRequestBase[]? additionals = null)
+    : AntRequestBase(entityType, resultVisionFilter, filter, additionals)
 {
-    public override void ProcessRequest(
+    protected override void ProcessRequest(
         AntHill index,
         SearchContextBase searchContext,
         List<KeyValuePair<int, byte>>[] wordsBundle,
@@ -26,12 +27,6 @@ public class Search(
     {
         if (!index.Entities.TryGetValue(EntityType, out var entities))
             return;
-
-        foreach (int id in forceSelect ?? [])
-        {
-            if (entities.TryGetValue(id, out EntityMeta? meta))
-                SearchResult.TryAdd(meta.Key, new(meta));
-        }
 
         for (int queryWordPosition = 0; queryWordPosition < wordsBundle.Length; queryWordPosition++)
         {

@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using AntIndex.Models.Index;
+using AntIndex.Models.Runtime.AdditionalsRequests;
 
 namespace AntIndex.Models.Runtime.Requests;
 
@@ -14,10 +15,11 @@ public class SearchByKeys(
     byte entityType,
     Key[] parentsKeys,
     Func<IEnumerable<EntityMatchesBundle>, IEnumerable<EntityMatchesBundle>>? resultVisionFilter = null,
-    Func<Key, bool>? filter = null)
-    : SearchBy(entityType, parentsKeys[0].Type, resultVisionFilter, filter)
+    Func<Key, bool>? filter = null,
+    AdditionalRequestBase[]? additionals = null)
+    : SearchBy(entityType, parentsKeys[0].Type, resultVisionFilter, filter, null, additionals)
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override IEnumerable<Key> SelectParents(AntRequest context)
+    protected override IEnumerable<Key> SelectParents(AntRequestBase context)
         => parentsKeys;
 }

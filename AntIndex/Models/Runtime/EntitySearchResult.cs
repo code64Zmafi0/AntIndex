@@ -15,14 +15,15 @@ public class EntityMatchesBundle(EntityMeta entityMeta)
 
     public List<WordCompareResult> WordsMatches { get; } = new(2);
 
-    public Key Key
-        => EntityMeta.Key;
+    public Key Key => EntityMeta.Key;
+
+    public List<AdditionalRule> Rules { get; } = [];
+
+    public int RulesScore => Rules.Sum(i => i.Score);
 
     public int Prescore;
 
     public int Score;
-
-    public List<AdditionalRule> Rules { get; } = [];
 
     internal void AddMatch(WordCompareResult wordCompareResult)
     {

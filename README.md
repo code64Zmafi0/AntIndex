@@ -48,7 +48,6 @@ Implement abstract SearchContextBase
     - Search - search current type entities
     - SearchBy - search current type entities in parents hierarchy (parents must be found in the Search block above)
     - SearchByKeys  - search current type entities in parents hierarchy (parents are defined by the parentsKeys parameter)
-    - AppendChilds - force addition of child elements of the hierarchy by found parents
 - Override GetLinkedEntityMatchMiltipler(byte entityType, byte linkedType) for flexible scoring mathes of linked entities
 - Override GetPhraseTypeMultipler(byte phraseType) for flexible scoring by phrase types
 - Override OnLinkedEntityMatched(Key entityKey, Key linkedKey) to add individual sorting rules if linked entity is match

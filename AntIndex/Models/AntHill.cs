@@ -41,7 +41,7 @@ public class AntHill
         for (int i = 0; i < selectTypes.Length; i++)
         {
             (byte Type, int Take) = selectTypes[i];
-            AntRequest? request = Array.Find(searchContext.Request, i => i is not AppendChilds && i.EntityType == Type);
+            AntRequestBase? request = Array.Find(searchContext.Request, i => i.EntityType == Type);
 
             if (request is null)
             {
@@ -85,7 +85,7 @@ public class AntHill
         {
             for (int i = 0; i < searchContext.Request.Length; i++)
             {
-                AntRequest? request = searchContext.Request[i];
+                AntRequestBase? request = searchContext.Request[i];
                 foreach (var item in request.GetVisibleResults())
                     yield return item;
             }
@@ -100,7 +100,7 @@ public class AntHill
         List<KeyValuePair<int, byte>>[] wordsBundle = SearchSimlarIndexWordsByQuery(searchContext);
 
         foreach (var i in searchContext.Request)
-            i.ProcessRequest(this, searchContext, wordsBundle, ct);
+            i.Process(this, searchContext, wordsBundle, ct);
     }
 
     private List<KeyValuePair<int, byte>>[] SearchSimlarIndexWordsByQuery<TContext>(TContext searchContext)
@@ -303,9 +303,6 @@ public class AntHill
 
         for (int i = 0; i < wordsScores.Length; i++)
             resultScore += wordsScores[i];
-
-        for (int i = 0; i < entityMatchesBundle.Rules.Count; i++)
-            resultScore += entityMatchesBundle.Rules[i].Score;
 
         return resultScore;
     }

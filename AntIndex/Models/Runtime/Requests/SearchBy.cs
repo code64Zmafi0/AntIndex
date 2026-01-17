@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using AntIndex.Models.Abstract;
 using AntIndex.Models.Index;
+using AntIndex.Models.Runtime.AdditionalsRequests;
 
 namespace AntIndex.Models.Runtime.Requests;
 
@@ -12,21 +13,23 @@ namespace AntIndex.Models.Runtime.Requests;
 /// <param name="byType">Тип сущности родителя (Parent)</param>
 /// <param name="resultVisionFilter">Фильтр отображения результатов в итоговом списке поиска</param>
 /// <param name="filter">Фильтр добавления в словарь найденных</param>
-/// <param name="parentsFilter">Фильтр родителей по которым осущетсвляем поиск</param>
+/// <param name="parentsFilter">Фильтр родителей по которым осуществляем поиск</param>
 public class SearchBy(
     byte entityType,
     byte byType,
     Func<IEnumerable<EntityMatchesBundle>, IEnumerable<EntityMatchesBundle>>? resultVisionFilter = null,
     Func<Key, bool>? filter = null,
-    Func<IEnumerable<EntityMatchesBundle>, IEnumerable<Key>>? parentsFilter = null) : AntRequest(entityType, resultVisionFilter, filter)
+    Func<IEnumerable<EntityMatchesBundle>, IEnumerable<Key>>? parentsFilter = null,
+    AdditionalRequestBase[]? additionals = null)
+    : AntRequestBase(entityType, resultVisionFilter, filter, additionals)
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public virtual IEnumerable<Key> SelectParents(AntRequest parentRequest)
+    protected virtual IEnumerable<Key> SelectParents(AntRequestBase parentRequest)
         => parentsFilter is null
             ? parentRequest.SearchResult.Keys
             : parentsFilter.Invoke(parentRequest.SearchResult.Values).ToArray();
 
-    public override void ProcessRequest(
+    protected override void ProcessRequest(
         AntHill index,
         SearchContextBase searchContext,
         List<KeyValuePair<int, byte>>[] wordsBundle,

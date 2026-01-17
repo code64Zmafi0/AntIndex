@@ -1,5 +1,6 @@
 ﻿using AntIndex.Models.Index;
 using AntIndex.Models.Runtime;
+using AntIndex.Models.Runtime.AdditionalsRequests;
 using AntIndex.Models.Runtime.Requests;
 using AntIndex.Services.Normalizing;
 using AntIndex.Services.Splitting;
@@ -13,7 +14,7 @@ public abstract class SearchContextBase(
 {
     public string Query { get; } = normalizer.Normalize(query);
 
-    public abstract AntRequest[] Request { get; }
+    public abstract AntRequestBase[] Request { get; }
 
 
     private QueryWordContainer[]? _splittedQuery;
@@ -79,13 +80,13 @@ public abstract class SearchContextBase(
         return GetPhraseTypeMultipler(phraseType);
     }
 
-    internal AntRequest? GetRequestByType(byte type)
+    internal AntRequestBase? GetRequestByType(byte type)
     {
         for (int i = 0; i < Request.Length; i++)
         {
-            AntRequest? request = Request[i];
+            AntRequestBase? request = Request[i];
 
-            if (request is AppendChilds)
+            if (request is AppendByParent)
                 continue;
 
             if (request.EntityType == type)
