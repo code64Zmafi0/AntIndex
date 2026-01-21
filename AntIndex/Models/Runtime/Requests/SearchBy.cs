@@ -2,41 +2,36 @@
 using System.Runtime.InteropServices;
 using AntIndex.Models.Abstract;
 using AntIndex.Models.Index;
-using AntIndex.Models.Runtime.AdditionalsRequests;
 
 namespace AntIndex.Models.Runtime.Requests;
 
 /// <summary>
 /// Выполняет поиск сущностей целевого типа по найденным родителям (Parent)
 /// </summary>
-/// <param name="entityType">Целевой тип сущности</param>
-/// <param name="byType">Тип сущности родителя (Parent)</param>
-/// <param name="resultVisionFilter">Фильтр отображения результатов в итоговом списке поиска</param>
+/// <param name="targetType">Целевой тип сущности</param>
+/// <param name="parentType">Тип сущности родителя (Parent)</param>
 /// <param name="filter">Фильтр добавления в словарь найденных</param>
-/// <param name="parentsFilter">Фильтр родителей по которым осуществляем поиск</param>
+/// <param name="parentsFilter">Фильтр родителей по которым осущетсвляем поиск</param>
 public class SearchBy(
-    byte entityType,
-    byte byType,
-    Func<IEnumerable<EntityMatchesBundle>, IEnumerable<EntityMatchesBundle>>? resultVisionFilter = null,
+    byte targetType,
+    byte parentType,
     Func<Key, bool>? filter = null,
-    Func<IEnumerable<EntityMatchesBundle>, IEnumerable<Key>>? parentsFilter = null,
-    AdditionalRequestBase[]? additionals = null)
-    : AntRequestBase(entityType, resultVisionFilter, filter, additionals)
+    Func<IEnumerable<EntityMatchesBundle>, IEnumerable<Key>>? parentsFilter = null) : AntRequestBase(targetType)
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected virtual IEnumerable<Key> SelectParents(AntRequestBase parentRequest)
+    public virtual IEnumerable<Key> SelectParents(Dictionary<Key, EntityMatchesBundle> byStrat)
         => parentsFilter is null
-            ? parentRequest.SearchResult.Keys
-            : parentsFilter.Invoke(parentRequest.SearchResult.Values).ToArray();
+            ? byStrat.Keys
+            : parentsFilter.Invoke(byStrat.Values).ToArray();
 
-    protected override void ProcessRequest(
+    public override void ProcessRequest(
         AntHill index,
         SearchContextBase searchContext,
         List<KeyValuePair<int, byte>>[] wordsBundle,
         CancellationToken ct)
     {
-        if (!index.Entities.TryGetValue(EntityType, out var entities)
-            || !(searchContext.GetRequestByType(byType) is { } byStrat))
+        if (!index.Entities.TryGetValue(TargetType, out var entities)
+            || !(searchContext.GetResultsByType(parentType) is { } byStrat))
             return;
 
         IEnumerable<Key> parents = SelectParents(byStrat);
@@ -61,7 +56,7 @@ public class SearchBy(
                 bool isMatchedWord = false;
                 foreach (var wordMatchMeta in index.EntitiesByWordsIndex.GetMatchesByWordAndParents(
                     wordId,
-                    EntityType,
+                    TargetType,
                     parents))
                 {
                     if (ct.IsCancellationRequested)
@@ -72,18 +67,10 @@ public class SearchBy(
                     EntityMeta entityMeta = entities[wordMatchMeta.EntityId];
                     Key entityKey = entityMeta.Key;
 
-                    if (!((Filter?.Invoke(entityKey)) ?? true))
+                    if (!((filter?.Invoke(entityKey)) ?? true))
                         continue;
 
-                    ref var entityMatch = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, entityKey, out var exists);
-
-                    if (!exists)
-                        entityMatch = new(entityMeta);
-
-                    entityMatch!.AddMatch(
-                        new(queryWordPosition,
-                            wordMatchMeta,
-                            indexWordInfo.Value));
+                    searchContext.AddResult(entityMeta, new(queryWordPosition, wordMatchMeta, indexWordInfo.Value));
                 }
 
                 if (isMatchedWord)

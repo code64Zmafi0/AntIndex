@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using AntIndex.Models.Abstract;
 using AntIndex.Models.Index;
 using AntIndex.Models.Runtime;
-using AntIndex.Models.Runtime.Requests;
 using MessagePack;
 
 namespace AntIndex.Models;
@@ -22,7 +21,7 @@ public class AntHill
     public Dictionary<int /*NGrammHash*/, int[] /*WordsIds*/> WordsIdsByNgramms { get; set; } = [];
 
     [Key(3)]
-    public int[/*WordId*/][/*NGrammHashes*/] WordsByIds { get; set; } = [];
+    public int[/*NGrammHashes*/][/*WordId*/] WordsByIds { get; set; } = [];
 
     [Key(4)]
     public EntitiesByWordsIndex EntitiesByWordsIndex { get; set; } = new();
@@ -41,7 +40,7 @@ public class AntHill
         for (int i = 0; i < selectTypes.Length; i++)
         {
             (byte Type, int Take) = selectTypes[i];
-            AntRequestBase? request = Array.Find(searchContext.Request, i => i.EntityType == Type);
+            Dictionary<Key, EntityMatchesBundle>? request = searchContext.GetResultsByType(Type);
 
             if (request is null)
             {
@@ -50,8 +49,7 @@ public class AntHill
             }
 
             var typeResult = searchContext
-                .PostProcessing(request
-                    .GetVisibleResults()
+                .PostProcessing(searchContext.ResultVisionFilter(Type, request.Values)
                     .OrderByDescending(matchBundle =>
                     {
                         matchBundle.Score = CalculateScore(matchBundle, searchContext);
@@ -61,7 +59,7 @@ public class AntHill
                 .Take(Take)
                 .ToArray();
 
-            result[i] = new(request.EntityType, typeResult);
+            result[i] = new(Type, typeResult);
         }
 
         return result;
@@ -83,10 +81,9 @@ public class AntHill
 
         IEnumerable<EntityMatchesBundle> GetAllResults()
         {
-            for (int i = 0; i < searchContext.Request.Length; i++)
+            foreach (var typeResults in searchContext.SearchResult)
             {
-                AntRequestBase? request = searchContext.Request[i];
-                foreach (var item in request.GetVisibleResults())
+                foreach (var item in searchContext.ResultVisionFilter(typeResults.Key, typeResults.Value.Values))
                     yield return item;
             }
         }
@@ -100,7 +97,7 @@ public class AntHill
         List<KeyValuePair<int, byte>>[] wordsBundle = SearchSimlarIndexWordsByQuery(searchContext);
 
         foreach (var i in searchContext.Request)
-            i.Process(this, searchContext, wordsBundle, ct);
+            i.ProcessRequest(this, searchContext, wordsBundle, ct);
     }
 
     private List<KeyValuePair<int, byte>>[] SearchSimlarIndexWordsByQuery<TContext>(TContext searchContext)
@@ -158,7 +155,7 @@ public class AntHill
         {
             int treshold = queryWord.IsDigit
                 ? queryWord.NGrammsHashes.Length - 1
-                : (int)(wordContainer.QueryWord.NGrammsHashes.Length * similarityTreshold);
+                : (int)(queryWord.NGrammsHashes.Length * similarityTreshold);
 
             Dictionary<int, byte> similars = GetSimilarWords(queryWord, treshold, wordsSearchProcessDict);
 
@@ -216,6 +213,9 @@ public class AntHill
             }
             else
             {
+                if (ptr == queryWordHashes.Length - 1)
+                    return true;
+
                 missed++;
                 if (missed > MaxDistance)
                 {
@@ -285,8 +285,8 @@ public class AntHill
         {
             Key nodeKey = nodes[i];
 
-            if (searchContext.GetRequestByType(nodeKey.Type) is { } req
-                && req.SearchResult.TryGetValue(nodeKey, out var chaiedMathes))
+            if (searchContext.GetResultsByType(nodeKey.Type) is { } req
+                && req.TryGetValue(nodeKey, out var chaiedMathes))
             {
                 double nodeMultipler = searchContext.GetLinkedEntityMatchMiltipler(entityMatchesBundle.Key.Type, nodeKey.Type);
                 CalculateNodeMatchesScore(in wordsScores, searchContext, chaiedMathes.WordsMatches, nodeMultipler);

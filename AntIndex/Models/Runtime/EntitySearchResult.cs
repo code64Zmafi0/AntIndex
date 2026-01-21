@@ -15,9 +15,9 @@ public class EntityMatchesBundle(EntityMeta entityMeta)
 
     public List<WordCompareResult> WordsMatches { get; } = new(2);
 
-    public Key Key => EntityMeta.Key;
-
     public List<AdditionalRule> Rules { get; } = [];
+
+    public Key Key => EntityMeta.Key;
 
     public int RulesScore => Rules.Sum(i => i.Score);
 
