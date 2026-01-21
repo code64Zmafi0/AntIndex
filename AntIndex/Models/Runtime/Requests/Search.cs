@@ -8,15 +8,11 @@ namespace AntIndex.Models.Runtime.Requests;
 /// Выполняет поиск сущностей целевого типа
 /// </summary>
 /// <param name="entityType">Целевой тип сущности</param>
-/// <param name="resultVisionFilter">Фильтр отображения результатов в итоговом списке поиска</param>
 /// <param name="filter">Фильтр добавления в словарь найденных</param>
-/// <param name="forceSelect">Принудительное добаваления сущностей целеовго типа по id</param>
 public class Search(
     byte entityType,
-    Func<IEnumerable<EntityMatchesBundle>, IEnumerable<EntityMatchesBundle>>? resultVisionFilter = null,
-    Func<Key, bool>? filter = null,
-    IEnumerable<int>? forceSelect = null)
-    : AntRequest(entityType, resultVisionFilter, filter)
+    Func<Key, bool>? filter = null)
+    : AntRequestBase(entityType)
 {
     public override void ProcessRequest(
         AntHill index,
@@ -24,14 +20,8 @@ public class Search(
         List<KeyValuePair<int, byte>>[] wordsBundle,
         CancellationToken ct)
     {
-        if (!index.Entities.TryGetValue(EntityType, out var entities))
+        if (!index.Entities.TryGetValue(TargetType, out var entities))
             return;
-
-        foreach (int id in forceSelect ?? [])
-        {
-            if (entities.TryGetValue(id, out EntityMeta? meta))
-                SearchResult.TryAdd(meta.Key, new(meta));
-        }
 
         for (int queryWordPosition = 0; queryWordPosition < wordsBundle.Length; queryWordPosition++)
         {
@@ -50,7 +40,7 @@ public class Search(
 
                 int wordId = indexWordInfo.Key;
 
-                WordMatchMeta[]? list = index.EntitiesByWordsIndex.GetMatchesByWord(wordId, EntityType);
+                WordMatchMeta[]? list = index.EntitiesByWordsIndex.GetMatchesByWord(wordId, TargetType);
 
                 if (list is null)
                     continue;
@@ -66,18 +56,10 @@ public class Search(
                     EntityMeta entityMeta = entities[wordMatchMeta.EntityId];
                     Key entityKey = entityMeta.Key;
 
-                    if (!((Filter?.Invoke(entityKey)) ?? true))
+                    if (!((filter?.Invoke(entityKey)) ?? true))
                         continue;
 
-                    ref var entityMatch = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, entityKey, out var exists);
-
-                    if (!exists)
-                        entityMatch = new(entityMeta);
-
-                    entityMatch!.AddMatch(
-                        new(queryWordPosition,
-                            wordMatchMeta,
-                            indexWordInfo.Value));
+                    searchContext.AddResult(entityMeta, new(queryWordPosition, wordMatchMeta, indexWordInfo.Value));
                 }
             }
         }

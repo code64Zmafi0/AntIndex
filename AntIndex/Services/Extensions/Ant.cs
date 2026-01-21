@@ -31,7 +31,35 @@ public static class Ant
 
     public static Key[] Keys(byte type, params int[] ids)
         => Array.ConvertAll(ids, id => Key(type, id));
+    #endregion
 
+    #region Build
+    public static AntHillBuilder GetBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter) 
+        => new(normalizer, phraseSplitter);
+
+    public static AntHill Build(INormalizer normalizer, IPhraseSplitter phraseSplitter, IEnumerable<IIndexedEntity> entities)
+    {
+        var builder = new AntHillBuilder(normalizer, phraseSplitter);
+
+        foreach (var entity in entities)
+            builder.AddEntity(entity);
+
+        return builder.Build();
+    }
+
+    public static async Task<AntHill> Build(INormalizer normalizer, IPhraseSplitter phraseSplitter, IAsyncEnumerable<IIndexedEntity> entities)
+    {
+        var builder = new AntHillBuilder(normalizer, phraseSplitter);
+
+        await foreach (var entity in entities)
+            builder.AddEntity(entity);
+
+        return builder.Build();
+    }
+
+    #endregion
+
+    #region NgrammsLogic
     public const short NGRAM_LENGTH = 2;
 
     public static int[] GetNgrams(string word)
@@ -62,32 +90,6 @@ public static class Ant
         }
         return num + num2 * 1566083941;
     }
-    #endregion
-
-    #region Build
-    public static AntHillBuilder GetBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter) 
-        => new(normalizer, phraseSplitter);
-
-    public static AntHill Build(INormalizer normalizer, IPhraseSplitter phraseSplitter, IEnumerable<IIndexedEntity> entities)
-    {
-        var builder = new AntHillBuilder(normalizer, phraseSplitter);
-
-        foreach (var entity in entities)
-            builder.AddEntity(entity);
-
-        return builder.Build();
-    }
-
-    public static async Task<AntHill> Build(INormalizer normalizer, IPhraseSplitter phraseSplitter, IAsyncEnumerable<IIndexedEntity> entities)
-    {
-        var builder = new AntHillBuilder(normalizer, phraseSplitter);
-
-        await foreach (var entity in entities)
-            builder.AddEntity(entity);
-
-        return builder.Build();
-    }
-
     #endregion
 
     #region Serialization

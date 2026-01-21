@@ -1,4 +1,5 @@
-﻿using AntIndex.Models.Index;
+﻿using System.Runtime.InteropServices;
+using AntIndex.Models.Index;
 using AntIndex.Models.Runtime;
 using AntIndex.Models.Runtime.Requests;
 using AntIndex.Services.Normalizing;
@@ -13,7 +14,9 @@ public abstract class SearchContextBase(
 {
     public string Query { get; } = normalizer.Normalize(query);
 
-    public abstract AntRequest[] Request { get; }
+    public Dictionary<byte, Dictionary<Key, EntityMatchesBundle>> SearchResult { get; set; } = [];
+
+    public abstract AntRequestBase[] Request { get; }
 
 
     private QueryWordContainer[]? _splittedQuery;
@@ -39,6 +42,9 @@ public abstract class SearchContextBase(
             });
 
     public virtual IOrderedEnumerable<EntityMatchesBundle> PostProcessing(IOrderedEnumerable<EntityMatchesBundle> result)
+        => result;
+
+    public virtual IEnumerable<EntityMatchesBundle> ResultVisionFilter(byte type, IEnumerable<EntityMatchesBundle> result)
         => result;
 
     public virtual double GetLinkedEntityMatchMiltipler(byte entityType, byte linkedType)
@@ -79,20 +85,29 @@ public abstract class SearchContextBase(
         return GetPhraseTypeMultipler(phraseType);
     }
 
-    internal AntRequest? GetRequestByType(byte type)
+    internal Dictionary<Key, EntityMatchesBundle>? GetResultsByType(byte type)
     {
-        for (int i = 0; i < Request.Length; i++)
-        {
-            AntRequest? request = Request[i];
-
-            if (request is AppendChilds)
-                continue;
-
-            if (request.EntityType == type)
-                return request;
-        }
+        if (SearchResult.TryGetValue(type, out var result))
+            return result;
 
         return null;
+    }
+
+    internal void AddResult(EntityMeta meta, WordCompareResult? compareResult)
+    {
+        Key key = meta.Key;
+        ref var types = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, key.Type, out var exists);
+
+        if (!exists)
+            types = [];
+
+        ref var matchesBundle = ref CollectionsMarshal.GetValueRefOrAddDefault(types!, key, out exists);
+
+        if (!exists)
+            matchesBundle = new(meta);
+
+        if (compareResult != null)
+            matchesBundle!.AddMatch(compareResult);
     }
 }
 
