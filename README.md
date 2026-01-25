@@ -3,7 +3,6 @@
 Linked data text search engine.
 
 
-
 ## Features
 
 - Fast text search using 2-gramm words index
@@ -34,10 +33,18 @@ Also, you can redefine normalization and phrases splitting on words for use in y
     - Parent() - Determine the parent if the entity cannot be found outside the given parent's hierarchy
 
 ### Build index
+
+**Building**
+
 - Use Ant.Build() to build Anthill index isntance, passing the normalizer and splitter instances to the method, as well as an enumeration entities for searching
 - Also, you can get an instance of the builder using Ant.GetBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter)
     - Call builder _AddEntity_ method to add entity (multithreading is not working)
     - Call _Build_ to get Anthill instance
+
+**Save**
+
+- Use Ant.WriteIndex(AntHill index, string filePath) for saving index file
+- Use Ant.ReadIndex(string filePath) for read index file
 
 ### Search
 
@@ -47,21 +54,19 @@ Implement abstract SearchContextBase
 - Implement SearchContextBase.Request property (array of requests to search) to configure your search request. The query options are presented below (use in the same order for proper operation)
     - Search - search current type entities
     - SearchBy - search current type entities in parents hierarchy (parents must be found in the Search block above)
-    - SearchByKeys  - search current type entities in parents hierarchy (parents are defined by the parentsKeys parameter)
+    - Select - performs forced addition of entities of the target type based on the passed ids
+    - AppendChilds - use to force adding entities by parent
 - Override GetLinkedEntityMatchMiltipler(byte entityType, byte linkedType) for flexible scoring mathes of linked entities
 - Override GetPhraseTypeMultipler(byte phraseType) for flexible scoring by phrase types
 - Override OnLinkedEntityMatched(Key entityKey, Key linkedKey) to add individual sorting rules if linked entity is match
 - Override OnEntityProcessed(EntityMatchesBundle entityMatchesBundle) to add individual sorting rules
+- Override ResultVisionFilter(byte type, IEnumerable<EntityMatchesBundle> result) to filter the results that will be output as a result
 
 **Search**
 
 - Use AntHill instance method Search passing the search context
 - Or use AntHill instance method SearchTypes passing the search context and list of target entities with their count
 
-**Save**
-
-- Use Ant.WriteIndex(AntHill index, string filePath) for saving index file
-- Use Ant.ReadIndex(string filePath) for read index file
 
 ## Optimizations
 
