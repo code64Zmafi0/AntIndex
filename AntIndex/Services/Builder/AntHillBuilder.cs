@@ -24,14 +24,14 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
             return;
 
         var names = indexedEntity.GetNames();
-        var byKey = indexedEntity.Parent();
+        var containerKey = indexedEntity.GetContainer();
 
         HashSet<Key> linksKeys = [];
 
-        if (byKey is not null)
-            linksKeys.Add(byKey);
+        if (containerKey is not null)
+            linksKeys.Add(containerKey);
 
-        foreach (var link in indexedEntity.Links())
+        foreach (var link in indexedEntity.GetLinks())
         {
             linksKeys.Add(link);
 
@@ -58,7 +58,7 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
                     continue;
 
                 WordMatchMeta wordMatchMeta = new(key.Id, wordNamePosition, phraseType);
-                EntitiesByWordsIndex.AddMatch(wordId, key.Type, byKey, wordMatchMeta);
+                EntitiesByWordsIndex.AddMatch(wordId, key.Type, containerKey, wordMatchMeta);
             }
         }
 

@@ -22,10 +22,10 @@ public class IndexBuildingTests
         public IEnumerable<Phrase> GetNames()
             => [Ant.Phrase(name)];
 
-        public IEnumerable<Key> Links()
+        public IEnumerable<Key> GetLinks()
             => [];
 
-        public Key? Parent()
+        public Key? GetContainer()
             => null;
     }
 }
