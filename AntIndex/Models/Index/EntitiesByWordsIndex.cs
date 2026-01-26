@@ -31,7 +31,7 @@ public class EntitiesByWordsIndex()
         if (!wordMatches.TryGetValue(entityType, out var mathesBundle))
             yield break;
 
-        foreach (var byKey in parentKeys)
+        foreach (Key byKey in parentKeys)
         {
             if (!mathesBundle.TryGetValue(byKey, out var entityMatches))
                 continue;
@@ -41,27 +41,14 @@ public class EntitiesByWordsIndex()
         }
     }
 
-    public void Trim(Func<Key, Key> GetKey)
+    public void Trim()
     {
         foreach (var collection in EntitiesByWords)
         {
-            foreach (var subCollection in collection)
+            foreach (var subCollection in collection.Values)
             {
-                Dictionary<Key, WordMatchMeta[]> res = subCollection.Value.Select(i =>
-                {
-                    var key = i.Key.Equals(Key.Default)
-                        ? Key.Default
-                        : GetKey(i.Key);
-
-                    return new KeyValuePair<Key, WordMatchMeta[]>(key, i.Value);
-                })
-                .ToDictionary();
-
-                res.TrimExcess();
-
-                collection[subCollection.Key] = res;
+                subCollection.TrimExcess();
             }
-
             collection.TrimExcess();
         }
     }

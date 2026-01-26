@@ -3,7 +3,7 @@
 namespace AntIndex.Models.Index;
 
 [MessagePackObject]
-public class Key : IEquatable<Key>
+public readonly struct Key : IEquatable<Key>
 {
     public static readonly Key Default = new(0, 0);
 
@@ -15,25 +15,17 @@ public class Key : IEquatable<Key>
         Type = type;
     }
 
-    [Key(1)]
-    public byte Type { get; }
-
     [Key(2)]
     public int Id { get; }
 
-    public bool Equals(Key? other)
-    {
-        if (ReferenceEquals(other, this))
-            return true;
+    [Key(1)]
+    public byte Type { get; }
 
-        return Id == other!.Id && Type == other.Type;
-    }
+    public bool Equals(Key other)
+        => Id == other!.Id && Type == other.Type;
 
     public override bool Equals(object? obj)
-    {
-        // Используем ReferenceEquals для проверки на null
-        return ReferenceEquals(this, obj) || obj is Key key && Equals(key);
-    }
+        => obj is Key key && Equals(key);
 
     public override int GetHashCode()
     {
@@ -44,5 +36,15 @@ public class Key : IEquatable<Key>
         num2 = (num2 << 5) + (num2 ^ Id);
 
         return num + num2 * 1566083941;
+    }
+
+    public static bool operator ==(Key left, Key right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(Key left, Key right)
+    {
+        return !(left == right);
     }
 }

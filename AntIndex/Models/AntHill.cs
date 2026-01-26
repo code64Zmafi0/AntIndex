@@ -331,30 +331,15 @@ public class AntHill
 
     public void Trim()
     {
-        Key GetKey(Key key)
-            => Entities.TryGetValue(key.Type, out var entities) && entities.TryGetValue(key.Id, out var meta)
-            ? meta.Key
-            : key;
-
         foreach (var collection in Entities.Values)
         {
             foreach (var meta in collection.Values)
             {
                 if (meta.Links.Length == 0)
                     meta.Links = Array.Empty<Key>();
-                else
-                {
-                    for (int i = 0; i < meta.Links.Length; i++)
-                        meta.Links[i] = GetKey(meta.Links[i]);
-                }
 
                 if (meta.Childs.Length == 0)
                     meta.Childs = Array.Empty<Key>();
-                else
-                {
-                    for (int i = 0; i < meta.Childs.Length; i++)
-                        meta.Childs[i] = GetKey(meta.Childs[i]);
-                }
             }
 
             collection.TrimExcess();
@@ -362,7 +347,7 @@ public class AntHill
 
         Entities.TrimExcess();
         WordsIdsByNgramms.TrimExcess();
-        EntitiesByWordsIndex.Trim(GetKey);
+        EntitiesByWordsIndex.Trim();
 
         GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive);

@@ -20,7 +20,7 @@ public class EntitiesByWordsBuilder()
         if (!exists)
             matchesBundle = [];
 
-        ref var matches = ref CollectionsMarshal.GetValueRefOrAddDefault(matchesBundle!, containerKey, out exists);
+        ref var matches = ref CollectionsMarshal.GetValueRefOrAddDefault(matchesBundle!, containerKey.Value, out exists);
 
         if (!exists)
             matches = [];

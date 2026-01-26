@@ -28,8 +28,8 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
 
         HashSet<Key> linksKeys = [];
 
-        if (containerKey is not null)
-            linksKeys.Add(containerKey);
+        if (containerKey.HasValue)
+            linksKeys.Add(containerKey.Value);
 
         foreach (var link in indexedEntity.GetLinks())
         {

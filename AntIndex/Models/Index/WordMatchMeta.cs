@@ -5,18 +5,7 @@ namespace AntIndex.Models.Index;
 [MessagePackObject]
 public readonly struct WordMatchMeta
 {
-    [Key(1)]
-    public int EntityId { get; }
-
-    [Key(2)]
-    public byte NameWordPosition { get; }
-
-    [Key(3)]
-    public byte PhraseType {  get; }
-
-    public WordMatchMeta()
-    {
-    }
+    public WordMatchMeta() { }
 
     public WordMatchMeta(
         int entityId,
@@ -25,6 +14,15 @@ public readonly struct WordMatchMeta
     {
         EntityId = entityId;
         NameWordPosition = nameWordPosition;
-        PhraseType = phraseType; 
+        PhraseType = phraseType;
     }
+
+    [Key(1)]
+    public int EntityId { get; }
+
+    [Key(2)]
+    public byte NameWordPosition { get; }
+
+    [Key(3)]
+    public byte PhraseType {  get; }
 }
