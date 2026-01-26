@@ -3,7 +3,7 @@
 namespace AntIndex.Models.Index;
 
 [MessagePackObject]
-public class WordMatchMeta
+public readonly struct WordMatchMeta
 {
     [Key(1)]
     public int EntityId { get; }
