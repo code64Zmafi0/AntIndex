@@ -164,7 +164,7 @@ public class AntHill
                 .OrderByDescending(i => i.Value))
             {
                 if (result.Count >= maxBundleLength)
-                    return;
+                    break;
 
                 result.Add(item);
             }
