@@ -47,12 +47,11 @@ public class Search(
 
                 ck.IncrementMatch();
 
-                for (int i = 0; i < list.Length; i++)
+                foreach (WordMatchMeta wordMatchMeta in list)
                 {
                     if (ct.IsCancellationRequested)
                         return;
 
-                    WordMatchMeta? wordMatchMeta = list[i];
                     EntityMeta entityMeta = entities[wordMatchMeta.EntityId];
                     Key entityKey = entityMeta.Key;
 

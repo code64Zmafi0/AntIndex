@@ -36,8 +36,8 @@ public class EntitiesByWordsIndex()
             if (!mathesBundle.TryGetValue(byKey, out var entityMatches))
                 continue;
 
-            for (int i = 0; i < entityMatches.Length; i++)
-                yield return entityMatches[i];
+            foreach (WordMatchMeta wordMatchMeta in entityMatches)
+                yield return wordMatchMeta;
         }
     }
 

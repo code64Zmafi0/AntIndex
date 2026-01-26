@@ -29,8 +29,8 @@ Also, you can redefine normalization and phrases splitting on words for use in y
     - GetNames() - Define the phrases by which the search will be carried out
         - Use the _Ant.Phrase()_ method and its overloads to specify names to search for and to define the name type for flexible sorting and scoring.
         - If you are using the extended phrase configuration Ant.Phrase(string phrase, byte phraseType), use phraseType > 0
-    - Links() - Identify the keys that are associated with your entity (when creating an index, the entity will be a child of each element in the Links list)
-    - Parent() - Determine the parent if the entity cannot be found outside the given parent's hierarchy
+    - GetLinks() - Identify the keys that are associated with your entity (when creating an index, the entity will be a child of each element in the Links list)
+    - GetContainer() - Determine the parent if the entity cannot be found outside the given parent's hierarchy
 
 ### Build index
 

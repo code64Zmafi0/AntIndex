@@ -143,8 +143,8 @@ public class AntHill
     {
         List<KeyValuePair<int, byte>> result = [];
 
-        for (int i = 0; i < wordContainer.Alternatives.Length; i++)
-            SearchAlternative(wordContainer.Alternatives[i], (byte)wordContainer.QueryWord.NGrammsHashes.Length, wordsSearchProcessDict);
+        foreach (Word altWord in wordContainer.Alternatives)
+            SearchAlternative(altWord, (byte)wordContainer.QueryWord.NGrammsHashes.Length, wordsSearchProcessDict);
 
         SearchSimilars(wordContainer.QueryWord, wordsSearchProcessDict);
 
@@ -251,13 +251,11 @@ public class AntHill
 
         for (int queryWordNgrammIndex = 0; queryWordNgrammIndex < wordLength; queryWordNgrammIndex++)
         {
-            if (!WordsIdsByNgramms.TryGetValue(queryWord.NGrammsHashes[queryWordNgrammIndex], out var wordsIds))
+            if (!WordsIdsByNgramms.TryGetValue(queryWord.NGrammsHashes[queryWordNgrammIndex], out int[]? wordsIds))
                 continue;
 
-            for (int i = 0; i < wordsIds.Length; i++)
+            foreach (int wordId in wordsIds)
             {
-                int wordId = wordsIds[i];
-
                 ref var matchInfo = ref CollectionsMarshal.GetValueRefOrNullRef(words, wordId);
 
                 if (!Unsafe.IsNullRef(ref matchInfo))
@@ -281,10 +279,8 @@ public class AntHill
 
         //Считаем совпадения в связанных нодах
         Key[] nodes = entityMatchesBundle.EntityMeta.Links;
-        for (int i = 0; i < nodes.Length; i++)
+        foreach (Key nodeKey in nodes)
         {
-            Key nodeKey = nodes[i];
-
             if (searchContext.GetResultsByType(nodeKey.Type) is { } req
                 && req.TryGetValue(nodeKey, out var chaiedMathes))
             {
