@@ -32,9 +32,9 @@ public class EntityMatchesBundle(EntityMeta entityMeta)
     }
 }
 
-public record WordCompareResult(
-    int QueryWordPosition,
+public readonly record struct WordCompareResult(
     WordMatchMeta MatchMeta,
-    int MatchLength);
+    byte QueryWordPosition,
+    byte MatchLength);
 
 public record AdditionalRule(string Name, int Score);

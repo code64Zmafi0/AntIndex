@@ -23,7 +23,7 @@ public class Search(
         if (!index.Entities.TryGetValue(TargetType, out var entities))
             return;
 
-        for (int queryWordPosition = 0; queryWordPosition < wordsBundle.Length; queryWordPosition++)
+        for (byte queryWordPosition = 0; queryWordPosition < wordsBundle.Length; queryWordPosition++)
         {
             List<KeyValuePair<int, byte>> currentBundle = wordsBundle[queryWordPosition];
 
@@ -58,7 +58,7 @@ public class Search(
                     if (!((filter?.Invoke(entityKey)) ?? true))
                         continue;
 
-                    searchContext.AddResult(entityMeta, new(queryWordPosition, wordMatchMeta, indexWordInfo.Value));
+                    searchContext.AddResult(entityMeta, wordMatchMeta, queryWordPosition, indexWordInfo.Value);
                 }
             }
         }

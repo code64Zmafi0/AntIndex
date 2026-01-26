@@ -50,7 +50,7 @@ public class AppendChilds(
                 {
                     var entityMeta = entities[child.Id];
 
-                    searchContext.AddResult(entityMeta, null);
+                    searchContext.AddResult(entityMeta);
                 }
             }
         }

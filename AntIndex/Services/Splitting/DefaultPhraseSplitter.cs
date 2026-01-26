@@ -30,6 +30,7 @@ public class DefaultPhraseSplitter : IPhraseSplitter
         return value.Normalize(NormalizationForm.FormC)
                     .Split(_splitChars, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
                     .SelectMany(TokenSplit)
+                    .Take(250)
                     .ToArray();
     }
 

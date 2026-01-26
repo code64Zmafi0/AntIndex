@@ -17,7 +17,7 @@ public class Select(byte targetType, IEnumerable<int> ids) : AntRequestBase(targ
         foreach (int id in ids)
         {
             if (entities.TryGetValue(id, out EntityMeta? meta))
-                searchContext.AddResult(meta, null);
+                searchContext.AddResult(meta);
         }
     }
 }

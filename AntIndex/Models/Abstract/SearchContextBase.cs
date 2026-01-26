@@ -93,7 +93,7 @@ public abstract class SearchContextBase(
         return null;
     }
 
-    internal void AddResult(EntityMeta meta, WordCompareResult? compareResult)
+    internal void AddResult(EntityMeta meta)
     {
         Key key = meta.Key;
         ref var types = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, key.Type, out var exists);
@@ -105,9 +105,22 @@ public abstract class SearchContextBase(
 
         if (!exists)
             matchesBundle = new(meta);
+    }
 
-        if (compareResult != null)
-            matchesBundle!.AddMatch(compareResult);
+    internal void AddResult(EntityMeta entityMeta, WordMatchMeta wordMatchMeta, byte queryWordPosition, byte matchLength)
+    {
+        Key key = entityMeta.Key;
+        ref var types = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, key.Type, out var exists);
+
+        if (!exists)
+            types = [];
+
+        ref var matchesBundle = ref CollectionsMarshal.GetValueRefOrAddDefault(types!, key, out exists);
+
+        if (!exists)
+            matchesBundle = new(entityMeta);
+
+        matchesBundle!.AddMatch(new(wordMatchMeta, queryWordPosition, matchLength));
     }
 }
 
