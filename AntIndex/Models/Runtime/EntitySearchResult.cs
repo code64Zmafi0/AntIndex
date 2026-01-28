@@ -25,7 +25,7 @@ public class EntityMatchesBundle(EntityMeta entityMeta)
 
     public int Score;
 
-    internal void AddMatch(WordCompareResult wordCompareResult)
+    internal void AddMatch(in WordCompareResult wordCompareResult)
     {
         WordsMatches.Add(wordCompareResult);
         Prescore += wordCompareResult.MatchLength;

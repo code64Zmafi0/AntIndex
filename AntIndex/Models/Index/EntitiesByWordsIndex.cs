@@ -24,7 +24,7 @@ public class EntitiesByWordsIndex()
     public IEnumerable<WordMatchMeta> GetMatchesByWordAndParents(
         int wordId,
         byte entityType,
-        IEnumerable<Key> parentKeys)
+        Key[] parentKeys)
     {
         var wordMatches = EntitiesByWords[wordId];
 

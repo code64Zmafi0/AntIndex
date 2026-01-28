@@ -58,7 +58,7 @@ public class Search(
                     if (!((filter?.Invoke(entityKey)) ?? true))
                         continue;
 
-                    searchContext.AddResult(entityMeta, wordMatchMeta, queryWordPosition, indexWordInfo.Value);
+                    searchContext.AddResult(entityMeta, new(wordMatchMeta, queryWordPosition, indexWordInfo.Value));
                 }
             }
         }

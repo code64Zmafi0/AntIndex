@@ -19,10 +19,10 @@ public class SearchBy(
     Func<IEnumerable<EntityMatchesBundle>, IEnumerable<Key>>? parentsFilter = null) : AntRequestBase(targetType)
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public virtual IEnumerable<Key> SelectParents(Dictionary<Key, EntityMatchesBundle> byStrat)
-        => parentsFilter is null
+    public virtual Key[] SelectParents(Dictionary<Key, EntityMatchesBundle> byStrat)
+        => (parentsFilter is null
             ? byStrat.Keys
-            : parentsFilter.Invoke(byStrat.Values).ToArray();
+            : parentsFilter.Invoke(byStrat.Values)).ToArray();
 
     public override void ProcessRequest(
         AntHill index,
@@ -34,7 +34,7 @@ public class SearchBy(
             || !(searchContext.GetResultsByType(parentType) is { } byStrat))
             return;
 
-        IEnumerable<Key> parents = SelectParents(byStrat);
+        Key[] parents = SelectParents(byStrat);
 
         for (byte queryWordPosition = 0; queryWordPosition < wordsBundle.Length; queryWordPosition++)
         {
@@ -70,7 +70,7 @@ public class SearchBy(
                     if (!((filter?.Invoke(entityKey)) ?? true))
                         continue;
 
-                    searchContext.AddResult(entityMeta, wordMatchMeta, queryWordPosition, indexWordInfo.Value);
+                    searchContext.AddResult(entityMeta, new(wordMatchMeta, queryWordPosition, indexWordInfo.Value));
                 }
 
                 if (isMatchedWord) ck.IncrementMatch();

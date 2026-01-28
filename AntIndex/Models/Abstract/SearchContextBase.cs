@@ -107,7 +107,7 @@ public abstract class SearchContextBase(
             matchesBundle = new(meta);
     }
 
-    internal void AddResult(EntityMeta entityMeta, WordMatchMeta wordMatchMeta, byte queryWordPosition, byte matchLength)
+    internal void AddResult(EntityMeta entityMeta, in WordCompareResult wordCompareResult)
     {
         Key key = entityMeta.Key;
         ref var types = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, key.Type, out var exists);
@@ -120,7 +120,7 @@ public abstract class SearchContextBase(
         if (!exists)
             matchesBundle = new(entityMeta);
 
-        matchesBundle!.AddMatch(new(wordMatchMeta, queryWordPosition, matchLength));
+        matchesBundle!.AddMatch(wordCompareResult);
     }
 }
 
