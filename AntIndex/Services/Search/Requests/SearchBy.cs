@@ -69,7 +69,12 @@ public class SearchBy(
                     if (!((filter?.Invoke(entityKey)) ?? true))
                         continue;
 
-                    searchContext.AddResult(entityMeta, new(wordMatchMeta, queryWordPosition, indexWordInfo.Value));
+                    searchContext.AddResult(
+                        entityMeta,
+                        wordMatchMeta.NameWordPosition,
+                        wordMatchMeta.PhraseType,
+                        queryWordPosition,
+                        indexWordInfo.Value);
                 }
 
                 if (isMatchedWord) ck.IncrementMatch();

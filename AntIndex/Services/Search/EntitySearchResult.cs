@@ -13,7 +13,7 @@ public class EntityMatchesBundle(EntityMeta entityMeta)
 {
     public EntityMeta EntityMeta { get; } = entityMeta;
 
-    public List<WordCompareResult> WordsMatches { get; } = new(2);
+    public List<WordCompareResult> WordsMatches { get; } = new(1);
 
     public List<AdditionalRule> Rules { get; } = [];
 
@@ -33,7 +33,8 @@ public class EntityMatchesBundle(EntityMeta entityMeta)
 }
 
 public readonly record struct WordCompareResult(
-    WordMatchMeta MatchMeta,
+    byte NameWordPosition,
+    byte PhraseType,
     byte QueryWordPosition,
     byte MatchLength);
 

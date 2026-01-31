@@ -119,7 +119,7 @@ public abstract class AntSearcherBase(
         return result;
     }
 
-    private List<KeyValuePair<int, byte>> SearchSimilarWordByQueryAndAlternatives(
+    private static List<KeyValuePair<int, byte>> SearchSimilarWordByQueryAndAlternatives(
         AntHill ant,
         QueryWordContainer wordContainer,
         double similarityTreshold,
@@ -162,7 +162,7 @@ public abstract class AntSearcherBase(
     /// <param name="queryWord"></param>
     /// <param name="treshold"></param>
     /// <returns>Словарь id слова, количество ngramm</returns>
-    private Dictionary<int, WordCompareFactor> GetSimilarWords(AntHill ant, Word queryWord, int treshold, Dictionary<int, WordCompareFactor> wordsSearchProcessDict)
+    private static Dictionary<int, WordCompareFactor> GetSimilarWords(AntHill ant, Word queryWord, int treshold, Dictionary<int, WordCompareFactor> wordsSearchProcessDict)
     {
         var wordLength = queryWord.NGrammsHashes.Length;
 
@@ -184,7 +184,7 @@ public abstract class AntSearcherBase(
                     matchInfo = new()
                     {
                         Mathes = (byte)(matchInfo.Mathes + 1),
-                        Misses = CalculateMiss(matchInfo, queryWordNgrammIndex),
+                        Misses = CalculateMiss(in matchInfo, queryWordNgrammIndex),
                         PreviousMatch = queryWordNgrammIndex
                     };
 
@@ -249,12 +249,11 @@ public abstract class AntSearcherBase(
         for (int wordMatchIndex = 0; wordMatchIndex < wordsMatches.Count; wordMatchIndex++)
         {
             WordCompareResult compareResult = wordsMatches[wordMatchIndex];
-            WordMatchMeta matchMeta = compareResult.MatchMeta;
 
             int score = compareResult.MatchLength;
 
             int queryWordPosition = compareResult.QueryWordPosition;
-            double phraseMultipler = GetPhraseMultiplerInternal(matchMeta.PhraseType);
+            double phraseMultipler = GetPhraseMultiplerInternal(compareResult.PhraseType);
 
             score = (int)(score * phraseMultipler * nodeMultipler);
 
@@ -293,7 +292,7 @@ public abstract class AntSearcherBase(
             matchesBundle = new(meta);
     }
 
-    public void AddResult(EntityMeta entityMeta, in WordCompareResult wordCompareResult)
+    public void AddResult(EntityMeta entityMeta, byte nameWordPosition, byte phraseType, byte queryWordPosition, byte matchLength)
     {
         Key key = entityMeta.Key;
         ref var types = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, key.Type, out var exists);
@@ -306,7 +305,7 @@ public abstract class AntSearcherBase(
         if (!exists)
             matchesBundle = new(entityMeta);
 
-        matchesBundle!.AddMatch(wordCompareResult);
+        matchesBundle!.AddMatch(new(nameWordPosition, phraseType, queryWordPosition, matchLength));
     }
     #endregion
 
