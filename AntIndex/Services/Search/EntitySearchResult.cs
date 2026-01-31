@@ -1,6 +1,6 @@
 ﻿using AntIndex.Models.Index;
 
-namespace AntIndex.Models.Runtime;
+namespace AntIndex.Services.Search;
 
 public class TypeSearchResult(byte type, EntityMatchesBundle[] result)
 {
@@ -36,5 +36,10 @@ public readonly record struct WordCompareResult(
     WordMatchMeta MatchMeta,
     byte QueryWordPosition,
     byte MatchLength);
+
+public readonly record struct WordCompareFactor(byte Mathes, byte Misses, byte PreviousMatch)
+{
+    public byte Score => Mathes > Misses ? (byte)(Mathes - Misses) : (byte)0;
+}
 
 public record AdditionalRule(string Name, int Score);

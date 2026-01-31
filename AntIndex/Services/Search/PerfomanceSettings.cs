@@ -1,4 +1,4 @@
-﻿namespace AntIndex.Models.Runtime;
+﻿namespace AntIndex.Services.Search;
 
 public record PerfomanceSettings(
     int MaxCheckingCount,

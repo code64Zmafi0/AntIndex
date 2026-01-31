@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using AntIndex.Models.Index;
 
-namespace AntIndex.Services.Builder;
+namespace AntIndex.Services.Build;
 
 public class EntitiesByWordsBuilder()
 {

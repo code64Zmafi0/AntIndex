@@ -1,4 +1,4 @@
-﻿namespace AntIndex.Models.Runtime;
+﻿namespace AntIndex.Services.Search;
 
 public class Perfomancer(int maxCheckingWords, int quantity)
 {

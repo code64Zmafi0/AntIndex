@@ -2,12 +2,11 @@
 using AntIndex.Interfaces;
 using AntIndex.Models;
 using AntIndex.Models.Index;
-using AntIndex.Models.Runtime;
 using AntIndex.Services.Extensions;
 using AntIndex.Services.Normalizing;
 using AntIndex.Services.Splitting;
 
-namespace AntIndex.Services.Builder;
+namespace AntIndex.Services.Build;
 
 public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter)
 {
@@ -105,13 +104,10 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
         };
 
         Dictionary<int, HashSet<int>> wordsIdsByNgramms = [];
-        int[][] wordsByIds = new int[WordsBundle.Pairs.Count][];
 
         foreach (var item in WordsBundle.GetWordsByIds())
         {
             int[] ngramms = Ant.GetNgrams(item.Key);
-
-            wordsByIds[item.Value] = ngramms;
 
             for (int i = 0; i < ngramms.Length; i++)
             {
@@ -128,7 +124,6 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
         return new AntHill()
         {
             Entities = Entities,
-            WordsByIds = wordsByIds,
             EntitiesByWordsIndex = EntitiesByWordsIndex.CreateIndex(),
             WordsIdsByNgramms = wordsIdsByNgramms.ToDictionary(i => i.Key, i => i.Value.ToArray()),
         };
@@ -153,8 +148,6 @@ public class WordsBuildBundle()
 
     public IEnumerable<KeyValuePair<string, int>> GetWordsByIds()
     {
-        var words = new Dictionary<int, Word>(Pairs.Count);
-
         foreach (var wordIdPair in Pairs.OrderBy(i => i.Key))
             yield return wordIdPair;
     }

@@ -48,10 +48,10 @@ Also, you can redefine normalization and phrases splitting on words for use in y
 
 ### Search
 
-**Create SearchContext** 
+**Create index searcher* 
 
-Implement abstract SearchContextBase
-- Implement SearchContextBase.Request property (array of requests to search) to configure your search request. The query options are presented below (use in the same order for proper operation)
+Implement abstract AntSearcherBase
+- Implement AntSearcherBase.Request property (array of requests to search) to configure your search request. The query options are presented below (use in the same order for proper operation)
     - Search - search current type entities
     - SearchBy - search current type entities in parents hierarchy (parents must be found in the Search block above)
     - Select - performs forced addition of entities of the target type based on the passed ids
@@ -64,11 +64,11 @@ Implement abstract SearchContextBase
 
 **Search**
 
-- Use AntHill instance method Search passing the search context
-- Or use AntHill instance method SearchTypes passing the search context and list of target entities with their count
+- Use AntSearcherBase method Search passing the search context
+- Or use AntSearcherBase method SearchTypes passing the search context and list of target entities with their count
 
 
 ## Optimizations
 
-- If your entity cannot be found if the hierarchy parent is not found, be sure to set the IIndexedEntity.Parent field to improve performance.
+- If your entity cannot be found if the hierarchy parent is not found, be sure to set the IIndexedEntity.GetContainer method to improve performance.
 - If you using overrides OnLinkedEntityMatched or OnEntityProcessed use a static AdditionalRule intances for smaller memory allocations 

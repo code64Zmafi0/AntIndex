@@ -1,9 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using AntIndex.Models.Abstract;
+using AntIndex.Models;
 using AntIndex.Models.Index;
 
-namespace AntIndex.Models.Runtime.Requests;
+namespace AntIndex.Services.Search.Requests;
 
 /// <summary>
 /// Выполняет поиск сущностей целевого типа по найденным родителям (Parent)
@@ -26,7 +25,7 @@ public class SearchBy(
 
     public override void ProcessRequest(
         AntHill index,
-        SearchContextBase searchContext,
+        AntSearcherBase searchContext,
         List<KeyValuePair<int, byte>>[] wordsBundle,
         CancellationToken ct)
     {

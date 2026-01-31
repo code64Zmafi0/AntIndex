@@ -1,6 +1,6 @@
-﻿using AntIndex.Models.Abstract;
+﻿using AntIndex.Models;
 
-namespace AntIndex.Models.Runtime.Requests;
+namespace AntIndex.Services.Search.Requests;
 
 public abstract class AntRequestBase(byte targetType)
 {
@@ -8,7 +8,7 @@ public abstract class AntRequestBase(byte targetType)
 
     public abstract void ProcessRequest(
         AntHill index,
-        SearchContextBase searchContext,
+        AntSearcherBase searchContext,
         List<KeyValuePair<int, byte>>[] wordsBundle,
         CancellationToken ct);
 }
