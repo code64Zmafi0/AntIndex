@@ -30,17 +30,18 @@ public class EntitiesByWordsBuilder()
 
     public EntitiesByWordsIndex CreateIndex()
     {
-        var entitiesByWords = new Dictionary<byte /*TypeId*/, Dictionary</*ByNodeKey*/ Key, WordMatchMeta[]>>[EntitiesByWords.Count];
+        var entitiesByWords = new KeyValuePair<byte /*TypeId*/, Dictionary</*ContainerKey*/ Key, WordMatchMeta[]>>[EntitiesByWords.Count][];
 
         foreach (var wordMatch in EntitiesByWords)
         {
             entitiesByWords[wordMatch.Key] = wordMatch.Value
-                .ToDictionary(
-                    i => i.Key,
-                    i => i.Value
-                        .ToDictionary(
-                            i => i.Key,
-                            i => i.Value.ToArray()));
+                .OrderBy(x => x.Key)
+                .Select(x => new KeyValuePair<byte, Dictionary</*ContainerKey*/ Key, WordMatchMeta[]>>(
+                    x.Key, 
+                    x.Value.ToDictionary(
+                        i => i.Key,
+                        i => i.Value.ToArray())))
+                .ToArray();
         }
 
         return new()

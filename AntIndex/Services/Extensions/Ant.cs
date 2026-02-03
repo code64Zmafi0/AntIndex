@@ -34,12 +34,12 @@ public static class Ant
     #endregion
 
     #region Build
-    public static AntHillBuilder GetBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter) 
-        => new(normalizer, phraseSplitter);
+    public static AntHillBuilder GetBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter, HierarchySettings? hierarchySettings = null)
+        => new(normalizer, phraseSplitter, hierarchySettings);
 
-    public static AntHill Build(INormalizer normalizer, IPhraseSplitter phraseSplitter, IEnumerable<IIndexedEntity> entities)
+    public static AntHill Build(INormalizer normalizer, IPhraseSplitter phraseSplitter, IEnumerable<IIndexedEntity> entities, HierarchySettings? hierarchySettings = null)
     {
-        var builder = new AntHillBuilder(normalizer, phraseSplitter);
+        var builder = new AntHillBuilder(normalizer, phraseSplitter, hierarchySettings);
 
         foreach (var entity in entities)
             builder.AddEntity(entity);
@@ -47,9 +47,9 @@ public static class Ant
         return builder.Build();
     }
 
-    public static async Task<AntHill> Build(INormalizer normalizer, IPhraseSplitter phraseSplitter, IAsyncEnumerable<IIndexedEntity> entities)
+    public static async Task<AntHill> Build(INormalizer normalizer, IPhraseSplitter phraseSplitter, IAsyncEnumerable<IIndexedEntity> entities, HierarchySettings? hierarchySettings = null)
     {
-        var builder = new AntHillBuilder(normalizer, phraseSplitter);
+        var builder = new AntHillBuilder(normalizer, phraseSplitter, hierarchySettings);
 
         await foreach (var entity in entities)
             builder.AddEntity(entity);

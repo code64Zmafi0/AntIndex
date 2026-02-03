@@ -8,38 +8,47 @@ using AntIndex.Services.Splitting;
 
 namespace AntIndex.Services.Build;
 
-public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter)
+public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter, HierarchySettings? settings = null)
 {
     private readonly Dictionary<byte, Dictionary<int, EntityMeta>> Entities = [];
     private readonly Dictionary<Key, HashSet<Key>> Childs = [];
     private readonly EntitiesByWordsBuilder EntitiesByWordsIndex = new();
     private readonly WordsBuildBundle WordsBundle = new();
+    private readonly HierarchySettings hierarchySettings = settings ?? HierarchySettings.Default;
 
     public void AddEntity(in IIndexedEntity indexedEntity)
     {
         Key key = indexedEntity.GetKey();
+        Key? containerKey = null;
 
         if (Entities.TryGetValue(key.Type, out var ids) && ids.ContainsKey(key.Id))
             return;
 
         var names = indexedEntity.GetNames();
-        var containerKey = indexedEntity.GetContainer();
 
         HashSet<Key> linksKeys = [];
 
-        if (containerKey.HasValue)
-            linksKeys.Add(containerKey.Value);
+        byte? containerType = hierarchySettings.EntitesContainers.TryGetValue(key.Type, out byte type) ? type : null;
+        byte[] parentsTypes = hierarchySettings.EntitiesParents.TryGetValue(key.Type, out byte[]? types) ? types : [];
 
-        foreach (var link in indexedEntity.GetLinks())
+        foreach (Key link in indexedEntity.GetLinks())
         {
+            if (!containerKey.HasValue && link.Type == containerType)
+            {
+                containerKey = link;
+            }
+
+            if (parentsTypes.Contains(link.Type))
+            {
+                ref var set = ref CollectionsMarshal.GetValueRefOrAddDefault(Childs, link, out var exists);
+
+                if (!exists)
+                    set = [];
+
+                set!.Add(key);
+            }
+
             linksKeys.Add(link);
-
-            ref var set = ref CollectionsMarshal.GetValueRefOrAddDefault(Childs, link, out var exists);
-
-            if (!exists)
-                set = [];
-
-            set!.Add(key);
         }
 
         HashSet<int> uniqWords = [];
