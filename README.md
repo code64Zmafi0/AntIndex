@@ -30,14 +30,14 @@ Also, you can redefine normalization and phrases splitting on words for use in y
         - Use the _Ant.Phrase()_ method and its overloads to specify names to search for and to define the name type for flexible sorting and scoring.
         - If you are using the extended phrase configuration Ant.Phrase(string phrase, byte phraseType), use phraseType > 0
     - GetLinks() - Identify the keys that are associated with your entity (when creating an index, the entity will be a child of each element in the Links list)
-    - GetContainer() - Determine the parent if the entity cannot be found outside the given parent's hierarchy
 
 ### Build index
 
 **Building**
 
 - Use Ant.Build() to build Anthill index isntance, passing the normalizer and splitter instances to the method, as well as an enumeration entities for searching
-- Also, you can get an instance of the builder using Ant.GetBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter)
+- Also, you can get an instance of the builder using Ant.GetBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter, HierarchySettings? settings = null)
+    - Setup HierarchySettings. Declare type dependencies to containers or parents to use SearchBy and AppendChilds
     - Call builder _AddEntity_ method to add entity (multithreading is not working)
     - Call _Build_ to get Anthill instance
 
