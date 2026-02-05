@@ -12,7 +12,7 @@ public class Word(string word) : IEquatable<Word>
 
     public bool Equals(Word? other)
     {
-        if (ReferenceEquals(null, other)) return false;
+        if (other is null) return false;
 
         return other.QueryWord.Equals(QueryWord);
     }

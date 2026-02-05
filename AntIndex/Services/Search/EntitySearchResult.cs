@@ -9,7 +9,7 @@ public class TypeSearchResult(byte type, EntityMatchesBundle[] result)
     public EntityMatchesBundle[] Result { get; } = result;
 }
 
-public class EntityMatchesBundle(EntityMeta entityMeta)
+public class EntityMatchesBundle(Key key, EntityMeta entityMeta)
 {
     public EntityMeta EntityMeta { get; } = entityMeta;
 
@@ -17,7 +17,7 @@ public class EntityMatchesBundle(EntityMeta entityMeta)
 
     public List<AdditionalRule> Rules { get; } = [];
 
-    public Key Key => EntityMeta.Key;
+    public Key Key => key;
 
     public int RulesScore => Rules.Sum(i => i.Score);
 

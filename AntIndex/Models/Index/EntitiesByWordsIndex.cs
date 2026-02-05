@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using MessagePack;
+﻿using MessagePack;
 
 namespace AntIndex.Models.Index;
 
@@ -50,9 +49,9 @@ public class EntitiesByWordsIndex()
     {
         foreach (var collection in EntitiesByWords)
         {
-            foreach (var subCollection in collection)
+            foreach (var item in collection)
             {
-                subCollection.Value.TrimExcess();
+                item.Value.TrimExcess();
             }
         }
     }
@@ -78,6 +77,3 @@ public class EntitiesByWordsIndex()
         return -1;
     }
 }
-
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public readonly record struct TypeContainer(Dictionary</*ByNodeKey*/ Key, WordMatchMeta[]> mathesBundle, byte type);

@@ -8,49 +8,34 @@ using AntIndex.Services.Splitting;
 
 namespace AntIndex.Services.Build;
 
-public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter, HierarchySettings? settings = null)
+public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter)
 {
-    private readonly Dictionary<byte, Dictionary<int, EntityMeta>> Entities = [];
+    private readonly Dictionary<Key, EntityMeta> Entities = [];
     private readonly Dictionary<Key, HashSet<Key>> Childs = [];
     private readonly EntitiesByWordsBuilder EntitiesByWordsIndex = new();
     private readonly WordsBuildBundle WordsBundle = new();
-    private readonly HierarchySettings hierarchySettings = settings ?? HierarchySettings.Default;
 
     public void AddEntity(in IIndexedEntity indexedEntity)
     {
         Key key = indexedEntity.GetKey();
-        Key? containerKey = null;
+        Key? containerKey = indexedEntity.GetContainer();
 
-        if (Entities.TryGetValue(key.Type, out var ids) && ids.ContainsKey(key.Id))
+        if (Entities.ContainsKey(key))
             return;
 
-        var names = indexedEntity.GetNames();
+        HashSet<Key> linksKeys = [.. indexedEntity.GetLinks()];
 
-        HashSet<Key> linksKeys = [];
-
-        byte? containerType = hierarchySettings.EntitesContainers.TryGetValue(key.Type, out byte type) ? type : null;
-        byte[] parentsTypes = hierarchySettings.EntitiesParents.TryGetValue(key.Type, out byte[]? types) ? types : [];
-
-        foreach (Key link in indexedEntity.GetLinks())
+        foreach (Key parent in indexedEntity.GetParents())
         {
-            if (!containerKey.HasValue && link.Type == containerType)
-            {
-                containerKey = link;
-            }
+            ref var set = ref CollectionsMarshal.GetValueRefOrAddDefault(Childs, parent, out var exists);
 
-            if (parentsTypes.Contains(link.Type))
-            {
-                ref var set = ref CollectionsMarshal.GetValueRefOrAddDefault(Childs, link, out var exists);
+            if (!exists)
+                set = [];
 
-                if (!exists)
-                    set = [];
-
-                set!.Add(key);
-            }
-
-            linksKeys.Add(link);
+            set!.Add(key);
         }
 
+        IEnumerable<Phrase> names = indexedEntity.GetNames();
         HashSet<int> uniqWords = [];
         (string[] TokenizedPhrase, byte PhraseType)[] namesToBuild = GetNamesToBuild(names, normalizer, phraseSplitter);
         for (int nameIndex = 0; nameIndex < namesToBuild.Length; nameIndex++)
@@ -70,12 +55,7 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
             }
         }
 
-        ref var byTypeEntiteies = ref CollectionsMarshal.GetValueRefOrAddDefault(Entities, key.Type, out var containsType);
-
-        if (!containsType)
-            byTypeEntiteies = [];
-
-        byTypeEntiteies![key.Id] = new(key, [.. linksKeys]);
+        Entities.Add(key, new([.. linksKeys]));
     }
 
     private static (string[] TokenizedPhrase, byte PhraseType)[] GetNamesToBuild(
@@ -95,11 +75,10 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
         {
             meta = null;
 
-            return Entities.TryGetValue(key.Type, out var entitiesByIds)
-                   && entitiesByIds.TryGetValue(key.Id, out meta);
+            return Entities.TryGetValue(key, out meta);
         }
 
-        foreach (var entity in Entities.Values.SelectMany(i => i.Values))
+        foreach (var entity in Entities.Values)
         {
             entity.Childs = [.. entity.Childs.Where(i => CheckMeta(i, out _))];
         }

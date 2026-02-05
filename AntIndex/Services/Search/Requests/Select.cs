@@ -11,13 +11,11 @@ public class Select(byte targetType, IEnumerable<int> ids) : AntRequestBase(targ
         List<KeyValuePair<int, byte>>[] wordsBundle,
         CancellationToken ct)
     {
-        if (!index.Entities.TryGetValue(TargetType, out var entities))
-            return;
-
         foreach (int id in ids)
         {
-            if (entities.TryGetValue(id, out EntityMeta? meta))
-                searchContext.AddResult(meta);
+            Key key = new Key(TargetType, id);
+            if (index.Entities.TryGetValue(key, out EntityMeta? meta))
+                searchContext.AddResult(key, meta);
         }
     }
 }

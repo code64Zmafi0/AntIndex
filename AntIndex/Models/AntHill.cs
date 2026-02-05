@@ -10,31 +10,26 @@ public class AntHill
     public AntHill() { }
 
     [Key(1)]
-    public Dictionary<byte /*TypeId*/, Dictionary<int /*EntityId*/, EntityMeta>> Entities { get; set; } = [];
+    public Dictionary<Key, EntityMeta> Entities { get; set; } = [];
 
     [Key(2)]
-    public Dictionary<int /*NGrammHash*/, int[] /*WordsIds*/> WordsIdsByNgramms { get; set; } = [];
+    public Dictionary<int, int[]> WordsIdsByNgramms { get; set; } = [];
 
     [Key(3)]
     public EntitiesByWordsIndex EntitiesByWordsIndex { get; set; } = new();
 
     [IgnoreMember]
-    public int EntitesCount => Entities.Sum(i => i.Value.Count);
+    public int EntitesCount => Entities.Count;
 
     public void Trim()
     {
-        foreach (var collection in Entities.Values)
+        foreach (EntityMeta meta in Entities.Values)
         {
-            foreach (var meta in collection.Values)
-            {
-                if (meta.Links.Length == 0)
-                    meta.Links = Array.Empty<Key>();
+            if (meta.Links.Length == 0)
+                meta.Links = Array.Empty<Key>();
 
-                if (meta.Childs.Length == 0)
-                    meta.Childs = Array.Empty<Key>();
-            }
-
-            collection.TrimExcess();
+            if (meta.Childs.Length == 0)
+                meta.Childs = Array.Empty<Key>();
         }
 
         Entities.TrimExcess();

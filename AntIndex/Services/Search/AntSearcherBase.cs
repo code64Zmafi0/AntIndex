@@ -110,8 +110,6 @@ public abstract class AntSearcherBase(
                 result[i] = SearchSimilarWordByQueryAndAlternatives(
                     ant,
                     currentWord,
-                    SimilarityTreshold,
-                    Perfomance.MaxCheckingCount,
                     wordsSearchProcessDict);
             }
         }
@@ -119,11 +117,9 @@ public abstract class AntSearcherBase(
         return result;
     }
 
-    private static List<KeyValuePair<int, byte>> SearchSimilarWordByQueryAndAlternatives(
+    private List<KeyValuePair<int, byte>> SearchSimilarWordByQueryAndAlternatives(
         AntHill ant,
         QueryWordContainer wordContainer,
-        double similarityTreshold,
-        int maxBundleLength,
         Dictionary<int, WordCompareFactor> wordsSearchProcessDict)
     {
         List<KeyValuePair<int, byte>> result = [];
@@ -133,7 +129,7 @@ public abstract class AntSearcherBase(
 
         int treshold = wordContainer.QueryWord.IsDigit
             ? wordContainer.QueryWord.NGrammsHashes.Length - 1
-            : (int)(wordContainer.QueryWord.NGrammsHashes.Length * similarityTreshold);
+            : (int)(wordContainer.QueryWord.NGrammsHashes.Length * SimilarityTreshold);
 
         SearchSimilars(wordContainer.QueryWord, treshold, wordsSearchProcessDict);
 
@@ -147,7 +143,7 @@ public abstract class AntSearcherBase(
             foreach (KeyValuePair<int, WordCompareFactor> item in similars
                 .Where(i => i.Value.Score >= treshold)
                 .OrderByDescending(i => i.Value.Score)
-                .Take(maxBundleLength))
+                .Take(Perfomance.MaxCheckingWordsCount))
             {
                 result.Add(new(item.Key, item.Value.Score));
             }
@@ -159,10 +155,12 @@ public abstract class AntSearcherBase(
     /// <summary>
     /// Метод отвечает за поиск похожих слов по 2-gramm
     /// </summary>
-    /// <param name="queryWord"></param>
-    /// <param name="treshold"></param>
     /// <returns>Словарь id слова, количество ngramm</returns>
-    private static Dictionary<int, WordCompareFactor> GetSimilarWords(AntHill ant, Word queryWord, int treshold, Dictionary<int, WordCompareFactor> wordsSearchProcessDict)
+    private static Dictionary<int, WordCompareFactor> GetSimilarWords(
+        AntHill ant,
+        Word queryWord,
+        int treshold,
+        Dictionary<int, WordCompareFactor> wordsSearchProcessDict)
     {
         var wordLength = queryWord.NGrammsHashes.Length;
 
@@ -278,9 +276,8 @@ public abstract class AntSearcherBase(
         return null;
     }
 
-    public void AddResult(EntityMeta meta)
+    public void AddResult(Key key, EntityMeta meta)
     {
-        Key key = meta.Key;
         ref var types = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, key.Type, out var exists);
 
         if (!exists)
@@ -289,12 +286,11 @@ public abstract class AntSearcherBase(
         ref var matchesBundle = ref CollectionsMarshal.GetValueRefOrAddDefault(types!, key, out exists);
 
         if (!exists)
-            matchesBundle = new(meta);
+            matchesBundle = new(key, meta);
     }
 
-    public void AddResult(EntityMeta entityMeta, byte nameWordPosition, byte phraseType, byte queryWordPosition, byte matchLength)
+    public void AddResult(Key key, EntityMeta entityMeta, byte nameWordPosition, byte phraseType, byte queryWordPosition, byte matchLength)
     {
-        Key key = entityMeta.Key;
         ref var types = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, key.Type, out var exists);
 
         if (!exists)
@@ -303,7 +299,7 @@ public abstract class AntSearcherBase(
         ref var matchesBundle = ref CollectionsMarshal.GetValueRefOrAddDefault(types!, key, out exists);
 
         if (!exists)
-            matchesBundle = new(entityMeta);
+            matchesBundle = new(key, entityMeta);
 
         matchesBundle!.AddMatch(new(nameWordPosition, phraseType, queryWordPosition, matchLength));
     }

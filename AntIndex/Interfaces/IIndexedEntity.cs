@@ -19,4 +19,14 @@ public interface IIndexedEntity
     /// Components of entity.
     /// </summary>
     IEnumerable<Key> GetLinks();
+
+    /// <summary>
+    /// The container to which the entity is bound. For using SearchInContainers.
+    /// </summary>
+    Key? GetContainer();
+
+    /// <summary>
+    ///  Parents to bind to.For using AppendChilds.
+    /// </summary>
+    IEnumerable<Key> GetParents();
 }

@@ -26,6 +26,13 @@ public class IndexBuildingTests
             => [];
 
         public Key? GetContainer()
-            => null;
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerable<Key> GetParents()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -22,8 +22,7 @@ public class AppendChilds(
         List<KeyValuePair<int, byte>>[] wordsBundle,
         CancellationToken ct)
     {
-        if (searchContext.GetResultsByType(parentType) is { } from
-            && index.Entities.TryGetValue(TargetType, out var entities))
+        if (searchContext.GetResultsByType(parentType) is { } from)
         {
             IEnumerable<Key> GetKeys()
             {
@@ -41,16 +40,16 @@ public class AppendChilds(
                 if (ct.IsCancellationRequested)
                     break;
 
-                if (!(index.Entities.TryGetValue(i.Type, out var byEntities) && byEntities.TryGetValue(i.Id, out var byParent)))
+                if (!(index.Entities.TryGetValue(i, out var byParent)))
                     continue;
 
                 var parentEntityChilds = byParent.Childs;
 
-                foreach (var child in appendFilter(parentEntityChilds.Where(i => i.Type == TargetType)))
+                foreach (Key child in appendFilter(parentEntityChilds.Where(i => i.Type == TargetType)))
                 {
-                    var entityMeta = entities[child.Id];
+                    var entityMeta = index.Entities[child];
 
-                    searchContext.AddResult(entityMeta);
+                    searchContext.AddResult(child, entityMeta);
                 }
             }
         }

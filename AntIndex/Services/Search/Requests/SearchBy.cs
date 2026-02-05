@@ -29,8 +29,7 @@ public class SearchBy(
         List<KeyValuePair<int, byte>>[] wordsBundle,
         CancellationToken ct)
     {
-        if (!index.Entities.TryGetValue(TargetType, out var entities)
-            || !(searchContext.GetResultsByType(parentType) is { } byStrat))
+        if (!(searchContext.GetResultsByType(parentType) is { } byStrat))
             return;
 
         Key[] parents = SelectParents(byStrat);
@@ -39,7 +38,7 @@ public class SearchBy(
         {
             List<KeyValuePair<int, byte>> currentBundle = wordsBundle[queryWordPosition];
 
-            var ck = searchContext.Perfomance.GetPerfomancer(currentBundle.Count);
+            var ck = searchContext.Perfomance.GetPerfomancer();
 
             for (int i = 0; i < currentBundle.Count; i++)
             {
@@ -47,8 +46,6 @@ public class SearchBy(
                     break;
 
                 KeyValuePair<int, byte> indexWordInfo = currentBundle[i];
-
-                ck.IncrementCheck();
 
                 int wordId = indexWordInfo.Key;
 
@@ -63,13 +60,14 @@ public class SearchBy(
 
                     isMatchedWord = true;
 
-                    EntityMeta entityMeta = entities[wordMatchMeta.EntityId];
-                    Key entityKey = entityMeta.Key;
+                    Key entityKey = new(TargetType, wordMatchMeta.EntityId);
+                    EntityMeta entityMeta = index.Entities[entityKey];
 
                     if (!((filter?.Invoke(entityKey)) ?? true))
                         continue;
 
                     searchContext.AddResult(
+                        entityKey,
                         entityMeta,
                         wordMatchMeta.NameWordPosition,
                         wordMatchMeta.PhraseType,

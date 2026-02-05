@@ -19,14 +19,11 @@ public class Search(
         List<KeyValuePair<int, byte>>[] wordsBundle,
         CancellationToken ct)
     {
-        if (!index.Entities.TryGetValue(TargetType, out var entities))
-            return;
-
         for (byte queryWordPosition = 0; queryWordPosition < wordsBundle.Length; queryWordPosition++)
         {
             List<KeyValuePair<int, byte>> currentBundle = wordsBundle[queryWordPosition];
 
-            var ck = searchContext.Perfomance.GetPerfomancer(currentBundle.Count);
+            var ck = searchContext.Perfomance.GetPerfomancer();
 
             for (int wbIndex = 0; wbIndex < currentBundle.Count; wbIndex++)
             {
@@ -34,8 +31,6 @@ public class Search(
                     break;
 
                 KeyValuePair<int, byte> indexWordInfo = currentBundle[wbIndex];
-
-                ck.IncrementCheck();
 
                 int wordId = indexWordInfo.Key;
 
@@ -51,13 +46,14 @@ public class Search(
                     if (ct.IsCancellationRequested)
                         return;
 
-                    EntityMeta entityMeta = entities[wordMatchMeta.EntityId];
-                    Key entityKey = entityMeta.Key;
+                    Key entityKey = new(TargetType, wordMatchMeta.EntityId);
+                    EntityMeta entityMeta = index.Entities[entityKey];
 
                     if (!((filter?.Invoke(entityKey)) ?? true))
                         continue;
 
                     searchContext.AddResult(
+                        entityKey,
                         entityMeta,
                         wordMatchMeta.NameWordPosition,
                         wordMatchMeta.PhraseType,
