@@ -38,9 +38,12 @@ public readonly record struct WordCompareResult(
     byte QueryWordPosition,
     byte MatchLength);
 
-public readonly record struct WordCompareFactor(byte Mathes, byte Misses, byte PreviousMatch)
+public readonly record struct WordCompareFactor(
+    byte Mathes,
+    byte Misses,
+    byte PreviousMatch)
 {
-    public byte Score => Mathes > Misses ? (byte)(Mathes - Misses) : (byte)0;
+    public byte Score => (byte)(Mathes > Misses ? Mathes - (Misses * 0.5): 0);
 }
 
 public record AdditionalRule(string Name, int Score);

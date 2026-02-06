@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using AntIndex.Models;
 using AntIndex.Models.Index;
+using AntIndex.Services.Extensions;
 using AntIndex.Services.Normalizing;
 using AntIndex.Services.Search.Requests;
 using AntIndex.Services.Splitting;
@@ -128,7 +129,7 @@ public abstract class AntSearcherBase(
             SearchSimilars(altWord, (byte)wordContainer.QueryWord.NGrammsHashes.Length, wordsSearchProcessDict);
 
         int treshold = wordContainer.QueryWord.IsDigit
-            ? wordContainer.QueryWord.NGrammsHashes.Length - 1
+            ? wordContainer.QueryWord.NGrammsHashes.Length - Ant.NGRAM_LENGTH - 1
             : (int)(wordContainer.QueryWord.NGrammsHashes.Length * SimilarityTreshold);
 
         SearchSimilars(wordContainer.QueryWord, treshold, wordsSearchProcessDict);
@@ -138,6 +139,8 @@ public abstract class AntSearcherBase(
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void SearchSimilars(Word queryWord, int treshold, Dictionary<int, WordCompareFactor> wordsSearchProcessDict)
         {
+            int queryLength = queryWord.NGrammsHashes.Length;
+
             Dictionary<int, WordCompareFactor> similars = GetSimilarWords(ant, queryWord, treshold, wordsSearchProcessDict);
 
             foreach (KeyValuePair<int, WordCompareFactor> item in similars
@@ -162,7 +165,7 @@ public abstract class AntSearcherBase(
         int treshold,
         Dictionary<int, WordCompareFactor> wordsSearchProcessDict)
     {
-        var wordLength = queryWord.NGrammsHashes.Length;
+        byte wordLength = (byte)queryWord.NGrammsHashes.Length;
 
         //Считаем количество совпавших ngramm для каждого слова
         Dictionary<int, WordCompareFactor> words = wordsSearchProcessDict;
@@ -175,6 +178,7 @@ public abstract class AntSearcherBase(
             for (int i = 0; i < wordsIds.Length; i++)
             {
                 int wordId = wordsIds[i];
+
                 ref var matchInfo = ref CollectionsMarshal.GetValueRefOrNullRef(words, wordId);
 
                 if (!Unsafe.IsNullRef(ref matchInfo))
@@ -183,7 +187,7 @@ public abstract class AntSearcherBase(
                     {
                         Mathes = (byte)(matchInfo.Mathes + 1),
                         Misses = CalculateMiss(in matchInfo, queryWordNgrammIndex),
-                        PreviousMatch = queryWordNgrammIndex
+                        PreviousMatch = queryWordNgrammIndex,
                     };
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -356,7 +360,7 @@ public abstract class AntSearcherBase(
         => 1500;
 
     public virtual double SimilarityTreshold
-        => 0.7;
+        => 0.5;
 
     public virtual HashSet<string> NotRealivatedWords { get; } = [];
 

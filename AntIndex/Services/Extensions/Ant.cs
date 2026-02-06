@@ -60,11 +60,13 @@ public static class Ant
     #endregion
 
     #region NgrammsLogic
-    public const short NGRAM_LENGTH = 2;
+    public const short NGRAM_LENGTH = 3;
 
     public static int[] GetNgrams(string word)
     {
-        var normalized = $" {word} ";
+        var space = string.Concat(Enumerable.Repeat(' ', NGRAM_LENGTH - 1));
+
+        var normalized = $"{space}{word}{space}";
 
         int[] result = new int[word.Length + NGRAM_LENGTH - 1];
 

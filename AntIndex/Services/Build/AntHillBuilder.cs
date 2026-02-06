@@ -92,10 +92,12 @@ public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitt
         };
 
         Dictionary<int, HashSet<int>> wordsIdsByNgramms = [];
+        int[] wordsByIds = new int[WordsBundle.Pairs.Count];
 
         foreach (var item in WordsBundle.GetWordsByIds())
         {
             int[] ngramms = Ant.GetNgrams(item.Key);
+            wordsByIds[item.Value] = ngramms.Length;
 
             for (int i = 0; i < ngramms.Length; i++)
             {
