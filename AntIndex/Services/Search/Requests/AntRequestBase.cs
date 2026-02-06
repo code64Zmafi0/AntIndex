@@ -7,8 +7,8 @@ public abstract class AntRequestBase(byte targetType)
     public byte TargetType { get; } = targetType;
 
     public abstract void ProcessRequest(
-        AntHill index,
-        AntSearcherBase searchContext,
+        SearchContext searchContext,
         List<KeyValuePair<int, byte>>[] wordsBundle,
+        PerfomanceSettings perfomance,
         CancellationToken ct);
 }

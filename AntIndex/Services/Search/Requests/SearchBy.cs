@@ -24,11 +24,13 @@ public class SearchBy(
             : parentsFilter.Invoke(byStrat.Values)).ToArray();
 
     public override void ProcessRequest(
-        AntHill index,
-        AntSearcherBase searchContext,
+        SearchContext searchContext,
         List<KeyValuePair<int, byte>>[] wordsBundle,
+        PerfomanceSettings perfomance,
         CancellationToken ct)
     {
+        AntHill index = searchContext.AntHill;
+
         if (!(searchContext.GetResultsByType(parentType) is { } byStrat))
             return;
 
@@ -38,11 +40,11 @@ public class SearchBy(
         {
             List<KeyValuePair<int, byte>> currentBundle = wordsBundle[queryWordPosition];
 
-            var ck = searchContext.Perfomance.GetPerfomancer();
+            Perfomancer perfomancer = perfomance.GetPerfomancer();
 
             for (int i = 0; i < currentBundle.Count; i++)
             {
-                if (!ck.NeedContinue)
+                if (!perfomancer.NeedContinue)
                     break;
 
                 KeyValuePair<int, byte> indexWordInfo = currentBundle[i];
@@ -75,7 +77,7 @@ public class SearchBy(
                         indexWordInfo.Value);
                 }
 
-                if (isMatchedWord) ck.IncrementMatch();
+                if (isMatchedWord) perfomancer.IncrementMatch();
             }
         }
     }

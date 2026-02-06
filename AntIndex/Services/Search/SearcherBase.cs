@@ -9,37 +9,80 @@ using AntIndex.Services.Splitting;
 
 namespace AntIndex.Services.Search;
 
-public abstract class AntSearcherBase(
-    string query,
-    INormalizer normalizer,
-    IPhraseSplitter splitter)
+public class SearcherBase(IPhraseSplitter splitter, INormalizer normalizer)
 {
     #region Search
+
+    public EntityMatchesBundle[] Search(AntHill ant,
+    string query,
+    AntRequestBase[] request,
+    int take,
+    CancellationToken? cancellationToken = null)
+    {
+        var ct = cancellationToken ?? new CancellationTokenSource(TimeoutMs).Token;
+
+        SearchContext context = CreateContext(ant, query, request, cancellationToken);
+
+        PerfomanceSettings perfomance = GetPerfomance(context);
+
+        List<KeyValuePair<int, byte>>[] wordsBundle = SearchSimlarIndexWordsByQuery(context, perfomance);
+
+        foreach (var i in request) i.ProcessRequest(context, wordsBundle, perfomance, ct);
+
+        return PostProcessing(GetAllResults()
+            .OrderByDescending(i =>
+            {
+                i.Score = CalculateScore(context, i);
+                return i.Score;
+            }))
+            .Take(take)
+            .ToArray();
+
+        IEnumerable<EntityMatchesBundle> GetAllResults()
+        {
+            foreach (var typeResults in context.SearchResult)
+            {
+                foreach (var item in ResultVisionFilter(typeResults.Key, typeResults.Value.Values))
+                    yield return item;
+            }
+        }
+    }
+
     public TypeSearchResult[] SearchTypes(
         AntHill ant,
+        string query,
+        AntRequestBase[] request,
         (byte Type, int Take)[] selectTypes,
         CancellationToken? cancellationToken = null)
     {
-        SearchInternal(ant, cancellationToken);
+        var ct = cancellationToken ?? new CancellationTokenSource(TimeoutMs).Token;
+
+        SearchContext context = CreateContext(ant, query, request, cancellationToken);
+
+        PerfomanceSettings perfomance = GetPerfomance(context);
+
+        List<KeyValuePair<int, byte>>[] wordsBundle = SearchSimlarIndexWordsByQuery(context, perfomance);
+
+        foreach (var i in request) i.ProcessRequest(context, wordsBundle, perfomance, ct);
 
         var result = new TypeSearchResult[selectTypes.Length];
 
         for (int i = 0; i < selectTypes.Length; i++)
         {
             (byte Type, int Take) = selectTypes[i];
-            Dictionary<Key, EntityMatchesBundle>? request = GetResultsByType(Type);
+            Dictionary<Key, EntityMatchesBundle>? typeSearchResult = context.GetResultsByType(Type);
 
-            if (request is null)
+            if (typeSearchResult is null)
             {
                 result[i] = new(Type, []);
                 continue;
             }
 
-            var typeResult = 
-                PostProcessing(ResultVisionFilter(Type, request.Values)
+            var typeResult =
+                PostProcessing(ResultVisionFilter(Type, typeSearchResult.Values)
                     .OrderByDescending(matchBundle =>
                     {
-                        matchBundle.Score = CalculateScore(matchBundle);
+                        matchBundle.Score = CalculateScore(context, matchBundle);
                         return matchBundle.Score;
                     })
                 )
@@ -52,54 +95,52 @@ public abstract class AntSearcherBase(
         return result;
     }
 
-    public EntityMatchesBundle[] Search(AntHill ant, int take = 30, CancellationToken? cancellationToken = null)
+    private SearchContext CreateContext(AntHill ant, string query, AntRequestBase[] request, CancellationToken? cancellationToken)
     {
-        SearchInternal(ant, cancellationToken);
+        string normalizedQuery = normalizer.Normalize(query);
+        string[] splittedQuery = splitter.Tokenize(normalizedQuery);
 
-        return PostProcessing(GetAllResults()
-            .OrderByDescending(i =>
-            {
-                i.Score = CalculateScore(i);
-                return i.Score;
-            }))
-            .Take(take)
-            .ToArray();
-
-        IEnumerable<EntityMatchesBundle> GetAllResults()
+        QueryWordContainer[] ngrammedWords = Array.ConvertAll(splittedQuery, i =>
         {
-            foreach (var typeResults in SearchResult)
-            {
-                foreach (var item in ResultVisionFilter(typeResults.Key, typeResults.Value.Values))
-                    yield return item;
-            }
-        }
-    }
+            bool notRealivated = NotRealivatedWords.Contains(i);
 
-    private void SearchInternal(AntHill ant, CancellationToken? cancellationToken = null)
+            Word[] alterantivesMetas = [];
+
+            if (AlternativeWords.TryGetValue(i, out var alternatives))
+                alterantivesMetas = Array.ConvertAll(alternatives, alt => new Word(alt));
+
+            return new QueryWordContainer(
+                new Word(i),
+                alterantivesMetas,
+                notRealivated);
+        });
+
+        SearchContext context = new(
+            ant,
+            normalizedQuery,
+            splittedQuery,
+            request,
+            ngrammedWords);
+
+        return context;
+    }    
+
+    private List<KeyValuePair<int, byte>>[] SearchSimlarIndexWordsByQuery(SearchContext searchContext, PerfomanceSettings perfomance)
     {
-        var ct = cancellationToken ?? new CancellationTokenSource(TimeoutMs).Token;
-
-        List<KeyValuePair<int, byte>>[] wordsBundle = SearchSimlarIndexWordsByQuery(ant);
-
-        foreach (var i in Request)
-            i.ProcessRequest(ant, this, wordsBundle, ct);
-    }
-
-    private List<KeyValuePair<int, byte>>[] SearchSimlarIndexWordsByQuery(AntHill ant)
-    {
-        var result = new List<KeyValuePair<int, byte>>[SplittedQuery.Length];
+        var splittedQuery = searchContext.SplittedQuery;
+        var result = new List<KeyValuePair<int, byte>>[splittedQuery.Length];
 
         //Используем один словарь для расчета совпавщих нграмм для каждого слова дабы лишний раз не аллоцировать
         Dictionary<int, WordCompareFactor> wordsSearchProcessDict = new(400_000);
 
         for (int i = 0; i < result.Length; i++)
         {
-            QueryWordContainer currentWord = SplittedQuery[i];
+            QueryWordContainer currentWord = splittedQuery[i];
 
             //Проверка на введеное слово ранее, чтоб не повторять вычисления
             for (int j = i - 1; j >= 0; j--)
             {
-                if (SplittedQuery[j].QueryWord.Equals(currentWord.QueryWord))
+                if (splittedQuery[j].QueryWord.Equals(currentWord.QueryWord))
                 {
                     result[i] = result[j];
                     break;
@@ -109,8 +150,9 @@ public abstract class AntSearcherBase(
             if (result[i] is null)
             {
                 result[i] = SearchSimilarWordByQueryAndAlternatives(
-                    ant,
+                    searchContext.AntHill,
                     currentWord,
+                    perfomance,
                     wordsSearchProcessDict);
             }
         }
@@ -121,6 +163,7 @@ public abstract class AntSearcherBase(
     private List<KeyValuePair<int, byte>> SearchSimilarWordByQueryAndAlternatives(
         AntHill ant,
         QueryWordContainer wordContainer,
+        PerfomanceSettings perfomance,
         Dictionary<int, WordCompareFactor> wordsSearchProcessDict)
     {
         List<KeyValuePair<int, byte>> result = [];
@@ -129,7 +172,7 @@ public abstract class AntSearcherBase(
             SearchSimilars(altWord, (byte)wordContainer.QueryWord.NGrammsHashes.Length, wordsSearchProcessDict);
 
         int treshold = wordContainer.QueryWord.IsDigit
-            ? wordContainer.QueryWord.NGrammsHashes.Length - Ant.NGRAM_LENGTH - 1
+            ? wordContainer.QueryWord.NGrammsHashes.Length - Ant.NGRAM_LENGTH + 1
             : (int)(wordContainer.QueryWord.NGrammsHashes.Length * SimilarityTreshold);
 
         SearchSimilars(wordContainer.QueryWord, treshold, wordsSearchProcessDict);
@@ -146,7 +189,7 @@ public abstract class AntSearcherBase(
             foreach (KeyValuePair<int, WordCompareFactor> item in similars
                 .Where(i => i.Value.Score >= treshold)
                 .OrderByDescending(i => i.Value.Score)
-                .Take(Perfomance.MaxCheckingWordsCount))
+                .Take(perfomance.MaxCheckingWordsCount))
             {
                 result.Add(new(item.Key, item.Value.Score));
             }
@@ -208,9 +251,9 @@ public abstract class AntSearcherBase(
         return words;
     }
 
-    private int CalculateScore(EntityMatchesBundle entityMatchesBundle)
+    private int CalculateScore(SearchContext searchContext, EntityMatchesBundle entityMatchesBundle)
     {
-        Span<int> wordsScores = stackalloc int[SplittedQuery.Length];
+        Span<int> wordsScores = stackalloc int[searchContext.SplittedQuery.Length];
 
         //Считаем основные совпадения
         CalculateNodeMatchesScore(in wordsScores, entityMatchesBundle.WordsMatches, 1);
@@ -219,7 +262,7 @@ public abstract class AntSearcherBase(
         Key[] nodes = entityMatchesBundle.EntityMeta.Links;
         foreach (Key nodeKey in nodes)
         {
-            if (GetResultsByType(nodeKey.Type) is { } req
+            if (searchContext.GetResultsByType(nodeKey.Type) is { } req
                 && req.TryGetValue(nodeKey, out var chaiedMathes))
             {
                 double nodeMultipler = GetLinkedEntityMatchMiltipler(entityMatchesBundle.Key.Type, nodeKey.Type);
@@ -271,72 +314,7 @@ public abstract class AntSearcherBase(
 
         return GetPhraseTypeMultipler(phraseType);
     }
-
-    internal Dictionary<Key, EntityMatchesBundle>? GetResultsByType(byte type)
-    {
-        if (SearchResult.TryGetValue(type, out var result))
-            return result;
-
-        return null;
-    }
-
-    public void AddResult(Key key, EntityMeta meta)
-    {
-        ref var types = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, key.Type, out var exists);
-
-        if (!exists)
-            types = [];
-
-        ref var matchesBundle = ref CollectionsMarshal.GetValueRefOrAddDefault(types!, key, out exists);
-
-        if (!exists)
-            matchesBundle = new(key, meta);
-    }
-
-    public void AddResult(Key key, EntityMeta entityMeta, byte nameWordPosition, byte phraseType, byte queryWordPosition, byte matchLength)
-    {
-        ref var types = ref CollectionsMarshal.GetValueRefOrAddDefault(SearchResult, key.Type, out var exists);
-
-        if (!exists)
-            types = [];
-
-        ref var matchesBundle = ref CollectionsMarshal.GetValueRefOrAddDefault(types!, key, out exists);
-
-        if (!exists)
-            matchesBundle = new(key, entityMeta);
-
-        matchesBundle!.AddMatch(new(nameWordPosition, phraseType, queryWordPosition, matchLength));
-    }
     #endregion
-
-    public string Query { get; } = normalizer.Normalize(query);
-
-    public Dictionary<byte, Dictionary<Key, EntityMatchesBundle>> SearchResult { get; set; } = [];
-
-    public abstract AntRequestBase[] Request { get; }
-
-
-    private QueryWordContainer[]? _splittedQuery;
-
-    public QueryWordContainer[] SplittedQuery
-        => _splittedQuery ??= GetSplittedQuery();
-
-    private QueryWordContainer[] GetSplittedQuery()
-        => Array.ConvertAll(splitter.Tokenize(Query),
-            word =>
-            {
-                bool notRealivated = NotRealivatedWords.Contains(word);
-
-                Word[] alterantivesMetas = Array.Empty<Word>();
-
-                if (AlternativeWords.TryGetValue(word, out var alternatives))
-                    alterantivesMetas = Array.ConvertAll(alternatives, alt => new Word(alt));
-
-                return new QueryWordContainer(
-                    new Word(word),
-                    alterantivesMetas,
-                    notRealivated);
-            });
 
     public virtual IOrderedEnumerable<EntityMatchesBundle> PostProcessing(IOrderedEnumerable<EntityMatchesBundle> result)
         => result;
@@ -366,8 +344,8 @@ public abstract class AntSearcherBase(
 
     public virtual Dictionary<string, string[]> AlternativeWords { get; } = [];
 
-    public virtual PerfomanceSettings Perfomance
-        => SplittedQuery.Length > 5
+    public virtual PerfomanceSettings GetPerfomance(SearchContext searchContext)
+        => searchContext.SplittedQuery.Length > 5
             ? PerfomanceSettings.Fast
             : PerfomanceSettings.Default;
 }

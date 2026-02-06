@@ -17,11 +17,13 @@ public class AppendChilds(
     int parentByTop = 0) : AntRequestBase(targetType)
 {
     public override void ProcessRequest(
-        AntHill index,
-        AntSearcherBase searchContext,
+        SearchContext searchContext,
         List<KeyValuePair<int, byte>>[] wordsBundle,
+        PerfomanceSettings perfomance,
         CancellationToken ct)
     {
+        AntHill index = searchContext.AntHill;
+
         if (searchContext.GetResultsByType(parentType) is { } from)
         {
             IEnumerable<Key> GetKeys()

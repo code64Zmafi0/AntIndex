@@ -14,23 +14,25 @@ public class Search(
     : AntRequestBase(entityType)
 {
     public override void ProcessRequest(
-        AntHill index,
-        AntSearcherBase searchContext,
+        SearchContext searchContext,
         List<KeyValuePair<int, byte>>[] wordsBundle,
+        PerfomanceSettings perfomance,
         CancellationToken ct)
     {
+        AntHill index = searchContext.AntHill;
+
         for (byte queryWordPosition = 0; queryWordPosition < wordsBundle.Length; queryWordPosition++)
         {
-            List<KeyValuePair<int, byte>> currentBundle = wordsBundle[queryWordPosition];
+            List<KeyValuePair<int, byte>> currentSimilarWordsBundle = wordsBundle[queryWordPosition];
 
-            var ck = searchContext.Perfomance.GetPerfomancer();
+            Perfomancer perfomancer = perfomance.GetPerfomancer();
 
-            for (int wbIndex = 0; wbIndex < currentBundle.Count; wbIndex++)
+            for (int wbIndex = 0; wbIndex < currentSimilarWordsBundle.Count; wbIndex++)
             {
-                if (!ck.NeedContinue)
+                if (!perfomancer.NeedContinue)
                     break;
 
-                KeyValuePair<int, byte> indexWordInfo = currentBundle[wbIndex];
+                KeyValuePair<int, byte> indexWordInfo = currentSimilarWordsBundle[wbIndex];
 
                 int wordId = indexWordInfo.Key;
 
@@ -39,7 +41,7 @@ public class Search(
                 if (list is null)
                     continue;
 
-                ck.IncrementMatch();
+                perfomancer.IncrementMatch();
 
                 foreach (WordMatchMeta wordMatchMeta in list)
                 {

@@ -2,6 +2,9 @@
 
 namespace AntIndex.Models.Index;
 
+/// <summary>
+/// Информация о совпадении слова с сущностью (EntityId, WordPositionInName, PhraseType)
+/// </summary>
 [MessagePackObject]
 public readonly struct WordMatchMeta
 {
