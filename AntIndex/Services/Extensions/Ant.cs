@@ -1,7 +1,7 @@
-﻿using AntIndex.Interfaces;
+using AntIndex.Interfaces;
 using AntIndex.Models;
 using AntIndex.Models.Index;
-using AntIndex.Services.Build;
+using AntIndex.Services.Building;
 using AntIndex.Services.Normalizing;
 using AntIndex.Services.Splitting;
 using MessagePack;

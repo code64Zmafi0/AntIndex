@@ -1,4 +1,4 @@
-﻿namespace AntIndex.Services.Search;
+namespace AntIndex.Services.Searching;
 
 public record PerfomanceSettings(
     int MaxCheckingWordsCount,

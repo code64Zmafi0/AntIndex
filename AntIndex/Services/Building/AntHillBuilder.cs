@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using AntIndex.Interfaces;
 using AntIndex.Models;
 using AntIndex.Models.Index;
@@ -6,7 +6,7 @@ using AntIndex.Services.Extensions;
 using AntIndex.Services.Normalizing;
 using AntIndex.Services.Splitting;
 
-namespace AntIndex.Services.Build;
+namespace AntIndex.Services.Building;
 
 public class AntHillBuilder(INormalizer normalizer, IPhraseSplitter phraseSplitter)
 {

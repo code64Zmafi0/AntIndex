@@ -1,4 +1,5 @@
-﻿using System.Runtime;
+using System.Net.Http.Headers;
+using System.Runtime;
 using AntIndex.Models.Index;
 using MessagePack;
 
@@ -7,6 +8,8 @@ namespace AntIndex.Models;
 [MessagePackObject]
 public class AntHill
 {
+    public static readonly AntHill Empty = new();
+
     public AntHill() { }
 
     [Key(1)]

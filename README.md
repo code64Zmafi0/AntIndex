@@ -14,14 +14,6 @@ Linked data text search engine.
 
 ## Documentation
 
-### Normalizing and splitting
-The library provides built-in tools for normalizing and splitting a name into words for searching. Use this static objects.
-
-AntIndex.Services.Normalizing.DefaultNormalizer.Instance
-AntIndex.Services.Splitting.DefaultPhraseSplitter.Instance
-
-Also, you can redefine normalization and phrases splitting on words for use in your cases. Implement: IPhraseSplitter and INormalizer
-
 ### Defining entities of search
 - Your search entity must implement the interface **IIndexedEntity**
     - GetKey() - Defines an entity keys
@@ -45,6 +37,14 @@ Also, you can redefine normalization and phrases splitting on words for use in y
 
 - Use Ant.WriteIndex(AntHill index, string filePath) for saving index file
 - Use Ant.ReadIndex(string filePath) for read index file
+
+### Normalizing and splitting
+The library provides built-in tools for normalizing and splitting a name into words for searching. Use this static objects.
+
+AntIndex.Services.Normalizing.DefaultNormalizer.Instance
+AntIndex.Services.Splitting.DefaultPhraseSplitter.Instance
+
+Also, you can redefine normalization and phrases splitting on words for use in your cases. Implement: IPhraseSplitter and INormalizer
 
 ### Search
 

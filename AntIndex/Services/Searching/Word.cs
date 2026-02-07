@@ -1,6 +1,6 @@
-﻿using AntIndex.Services.Extensions;
+using AntIndex.Services.Extensions;
 
-namespace AntIndex.Services.Search;
+namespace AntIndex.Services.Searching;
 
 public class Word(string word) : IEquatable<Word>
 {

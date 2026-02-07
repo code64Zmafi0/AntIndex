@@ -1,39 +1,39 @@
-﻿using AntIndex.Models;
+using AntIndex.Models;
 using AntIndex.Models.Index;
 
-namespace AntIndex.Services.Search.Requests;
+namespace AntIndex.Services.Searching.Requests;
 
 /// <summary>
-/// Выполняет принудительное добавление дочерних элементов в выдачу
+/// Выполняет принудительное добавление дочерних элементов по родителю в выдачу
 /// </summary>
 /// <param name="targetType">Целевой тип</param>
 /// <param name="parentType">Тип родителя</param>
 /// <param name="appendFilter">Фильтр дочерних сущностей КАЖДОГО родителя</param>
-/// <param name="parentByTop">Топ родителей по prescore для добавления дочерних</param>
+/// <param name="parentTop">Топ родителей по prescore для добавления дочерних</param>
 public class AppendChilds(
     byte targetType,
     byte parentType,
     Func<IEnumerable<Key>, IEnumerable<Key>> appendFilter,
-    int parentByTop = 0) : AntRequestBase(targetType)
+    int parentTop = 0) : AntRequestBase(targetType)
 {
     public override void ProcessRequest(
-        SearchContext searchContext,
+        AntSearchContextBase searchContext,
         List<KeyValuePair<int, byte>>[] wordsBundle,
         PerfomanceSettings perfomance,
         CancellationToken ct)
     {
-        AntHill index = searchContext.AntHill;
+        Dictionary<Key, EntityMeta> entities = searchContext.AntHill.Entities;
 
         if (searchContext.GetResultsByType(parentType) is { } from)
         {
             IEnumerable<Key> GetKeys()
             {
-                if (parentByTop < 1)
+                if (parentTop < 1)
                     return from.Keys;
                 else
                     return from
                         .OrderByDescending(i => i.Value.Prescore)
-                        .Take(parentByTop)
+                        .Take(parentTop)
                         .Select(i => i.Key);
             }
 
@@ -42,14 +42,14 @@ public class AppendChilds(
                 if (ct.IsCancellationRequested)
                     break;
 
-                if (!(index.Entities.TryGetValue(i, out var byParent)))
+                if (!(entities.TryGetValue(i, out var byParent)))
                     continue;
 
                 var parentEntityChilds = byParent.Childs;
 
                 foreach (Key child in appendFilter(parentEntityChilds.Where(i => i.Type == TargetType)))
                 {
-                    var entityMeta = index.Entities[child];
+                    var entityMeta = entities[child];
 
                     searchContext.AddResult(child, entityMeta);
                 }

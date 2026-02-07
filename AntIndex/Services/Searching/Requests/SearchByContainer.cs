@@ -1,19 +1,18 @@
-﻿using System.Runtime.CompilerServices;
-using AntIndex.Models;
+using System.Runtime.CompilerServices;
 using AntIndex.Models.Index;
 
-namespace AntIndex.Services.Search.Requests;
+namespace AntIndex.Services.Searching.Requests;
 
 /// <summary>
 /// Выполняет поиск сущностей целевого типа по найденным родителям (Parent)
 /// </summary>
 /// <param name="targetType">Целевой тип сущности</param>
-/// <param name="parentType">Тип сущности родителя (Parent)</param>
+/// <param name="containerType">Тип сущности родителя (Parent)</param>
 /// <param name="filter">Фильтр добавления в словарь найденных</param>
 /// <param name="parentsFilter">Фильтр родителей по которым осущетсвляем поиск</param>
-public class SearchBy(
+public class SearchByContainer(
     byte targetType,
-    byte parentType,
+    byte containerType,
     Func<Key, bool>? filter = null,
     Func<IEnumerable<EntityMatchesBundle>, IEnumerable<Key>>? parentsFilter = null) : AntRequestBase(targetType)
 {
@@ -24,14 +23,15 @@ public class SearchBy(
             : parentsFilter.Invoke(byStrat.Values)).ToArray();
 
     public override void ProcessRequest(
-        SearchContext searchContext,
+        AntSearchContextBase searchContext,
         List<KeyValuePair<int, byte>>[] wordsBundle,
         PerfomanceSettings perfomance,
         CancellationToken ct)
     {
-        AntHill index = searchContext.AntHill;
+        Dictionary<Key, EntityMeta> entites = searchContext.AntHill.Entities;
+        EntitiesByWordsIndex entitiesByWordsIndex = searchContext.AntHill.EntitiesByWordsIndex;
 
-        if (!(searchContext.GetResultsByType(parentType) is { } byStrat))
+        if (!(searchContext.GetResultsByType(containerType) is { } byStrat))
             return;
 
         Key[] parents = SelectParents(byStrat);
@@ -52,7 +52,7 @@ public class SearchBy(
                 int wordId = indexWordInfo.Key;
 
                 bool isMatchedWord = false;
-                foreach (var wordMatchMeta in index.EntitiesByWordsIndex.GetMatchesByWordAndParents(
+                foreach (var wordMatchMeta in entitiesByWordsIndex.GetMatchesByWordAndParents(
                     wordId,
                     TargetType,
                     parents))
@@ -63,7 +63,7 @@ public class SearchBy(
                     isMatchedWord = true;
 
                     Key entityKey = new(TargetType, wordMatchMeta.EntityId);
-                    EntityMeta entityMeta = index.Entities[entityKey];
+                    EntityMeta entityMeta = entites[entityKey];
 
                     if (!((filter?.Invoke(entityKey)) ?? true))
                         continue;

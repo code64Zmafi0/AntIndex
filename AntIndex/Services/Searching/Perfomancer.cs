@@ -1,4 +1,4 @@
-﻿namespace AntIndex.Services.Search;
+namespace AntIndex.Services.Searching;
 
 public class Perfomancer(int quantity)
 {

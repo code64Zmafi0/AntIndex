@@ -1,7 +1,6 @@
-﻿using AntIndex.Models;
 using AntIndex.Models.Index;
 
-namespace AntIndex.Services.Search.Requests;
+namespace AntIndex.Services.Searching.Requests;
 
 /// <summary>
 /// Выполняет поиск сущностей целевого типа
@@ -14,12 +13,14 @@ public class Search(
     : AntRequestBase(entityType)
 {
     public override void ProcessRequest(
-        SearchContext searchContext,
+        AntSearchContextBase searchContext,
         List<KeyValuePair<int, byte>>[] wordsBundle,
         PerfomanceSettings perfomance,
         CancellationToken ct)
     {
-        AntHill index = searchContext.AntHill;
+        EntitiesByWordsIndex entitiesByWordsIndex = searchContext.AntHill.EntitiesByWordsIndex;
+        Dictionary<Key, EntityMeta> entities = searchContext.AntHill.Entities;
+
 
         for (byte queryWordPosition = 0; queryWordPosition < wordsBundle.Length; queryWordPosition++)
         {
@@ -36,7 +37,7 @@ public class Search(
 
                 int wordId = indexWordInfo.Key;
 
-                WordMatchMeta[]? list = index.EntitiesByWordsIndex.GetMatchesByWord(wordId, TargetType);
+                WordMatchMeta[]? list = entitiesByWordsIndex.GetMatchesByWord(wordId, TargetType);
 
                 if (list is null)
                     continue;
@@ -49,7 +50,7 @@ public class Search(
                         return;
 
                     Key entityKey = new(TargetType, wordMatchMeta.EntityId);
-                    EntityMeta entityMeta = index.Entities[entityKey];
+                    EntityMeta entityMeta = entities[entityKey];
 
                     if (!((filter?.Invoke(entityKey)) ?? true))
                         continue;

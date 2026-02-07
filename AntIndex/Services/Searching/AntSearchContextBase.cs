@@ -1,24 +1,31 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using AntIndex.Models;
 using AntIndex.Models.Index;
-using AntIndex.Services.Search.Requests;
+using AntIndex.Services.Searching.Requests;
 
-namespace AntIndex.Services.Search;
+namespace AntIndex.Services.Searching;
 
-public class SearchContext(AntHill ant, string query, string[] splittedTextQuery,  AntRequestBase[] request, QueryWordContainer[] splittedQuery)
+public abstract class AntSearchContextBase(AntHill ant, string query)
 {
-    public AntHill AntHill { get; } = ant;
+    #region Overrides
+    public abstract AntRequestBase[] Request { get; }
 
-    public string Query { get; } = query;
+    public virtual HashSet<string> NotRealivatedWords { get; } = [];
 
-    public string[] SplittedTextQuery { get; } = splittedTextQuery;
+    public virtual Dictionary<string, string[]> AlternativeWords { get; } = [];
+    #endregion
 
-    public AntRequestBase[] Request { get; } = request;
+    public AntHill AntHill { get; set; } = ant;
 
-    public QueryWordContainer[] SplittedQuery { get; } = splittedQuery;
+    public string Query { get; set; } = query;
+
+    public string[] SplittedAndNormalizedQuery { get; set; } = [];
+
+    public QueryWordContainer[] NgrammedQuery { get; set; } = [];
 
     public Dictionary<byte, Dictionary<Key, EntityMatchesBundle>> SearchResult { get; set; } = [];
 
+    #region Search Tools
     public Dictionary<Key, EntityMatchesBundle>? GetResultsByType(byte type)
     {
         if (SearchResult.TryGetValue(type, out var result))
@@ -54,4 +61,5 @@ public class SearchContext(AntHill ant, string query, string[] splittedTextQuery
 
         matchesBundle!.AddMatch(new(nameWordPosition, phraseType, queryWordPosition, matchLength));
     }
+    #endregion
 }
